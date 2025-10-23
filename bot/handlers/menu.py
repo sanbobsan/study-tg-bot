@@ -9,6 +9,7 @@ menu_router = Router()
 queue = Queue()
 
 
+# TODO: оформление бота
 def get_queue_text() -> str:
     queue_str = "Очередь\n"
     for n, user in enumerate(queue.get_queue()):
@@ -51,6 +52,8 @@ async def leave(message: Message):
     await message.answer(text=text, reply_markup=kb.menu.as_markup())
 
 
+# TODO: оповещения людей, когда очередь создается
+# TODO: создать админ панель
 @menu_router.message(F.text, Command("admshf"))
 async def adm_shuffle(message: Message):
     queue.insert_buffer_in_queue()

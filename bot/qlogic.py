@@ -3,6 +3,7 @@ from random import shuffle
 from bot.data_base.models import User
 
 
+# TODO: переписать на Redis мб, не знаю
 class Singleton(type):
     _instances = {}
 

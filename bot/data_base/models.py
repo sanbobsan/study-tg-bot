@@ -4,6 +4,8 @@ from sqlalchemy.orm import Mapped, mapped_column
 from .db import Base
 
 
+# TODO: количество раз у доски уже
+# TODO: доверенный пользователь? 
 class User(Base):
     __tablename__ = "users"
 

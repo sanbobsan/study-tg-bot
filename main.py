@@ -9,7 +9,12 @@ from bot.data_base.base import create_tables
 from bot.handlers.start import start_router
 from bot.handlers.register import register_router
 from bot.handlers.menu import menu_router
+
+# TODO: нормальный конфиг
 from config import TOKEN
+
+
+# TODO: poetry
 
 
 async def start_bot():

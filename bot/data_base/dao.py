@@ -9,29 +9,64 @@ from .models import User
 
 
 @connection
+async def update_user(
+    session: AsyncSession,
+    tg_id: int,
+    username: str,
+    name: int,
+) -> User:
+    try:
+        user = await session.scalar(select(User).filter_by(id=tg_id))
+
+        if not user:
+            print("!!! Error !!! dao.update_user User not founded")
+            return None
+
+        old_name = user.name
+        user.username = username
+        user.name = name
+        await session.commit()
+        print(f"!!! Info !!! User renamed {old_name} -> {name}")
+        return user
+
+    except SQLAlchemyError as e:
+        print(f"!!! Error !!! dao.update_user \n{e}\n")
+        await session.rollback()
+
+
+@connection
 async def set_user(
-    session: AsyncSession, tg_id: int, username: str, name: str
+    session: AsyncSession,
+    tg_id: int,
+    username: str,
+    name: str = None,
 ) -> Optional[User]:
     try:
         user = await session.scalar(select(User).filter_by(id=tg_id))
 
         if not user:
-            new_user = User(id=tg_id, username=username, name=name)
+            new_user = User(
+                id=tg_id,
+                username=username,
+                name=name,
+            )
             session.add(new_user)
             await session.commit()
-            print("!!! Info !!! User created")
+            print(f"!!! Info !!! User created {username}")
         else:
-            print("!!! Info !!! User already exists")
             return user
 
     except SQLAlchemyError as e:
-        print(f"!!! Error !!! set_user \n{e}\n")
+        print(f"!!! Error !!! dao.set_user \n{e}\n")
+        await session.rollback()
 
 
 @connection
-async def get_user(session: AsyncSession, tg_id: int) -> User:
+async def get_user(session: AsyncSession, tg_id: int) -> User | None:
     try:
         user = await session.scalar(select(User).filter_by(id=tg_id))
         return user
+
     except SQLAlchemyError as e:
-        print(f"!!! Error !!! get_user \n{e}\n")
+        print(f"!!! Error !!! dao.get_user \n{e}\n")
+        await session.rollback()

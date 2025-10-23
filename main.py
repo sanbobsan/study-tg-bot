@@ -7,6 +7,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 
 from bot.data_base.base import create_tables
 from bot.handlers.start import start_router
+from bot.handlers.register import register_router
 from config import TOKEN
 
 
@@ -20,6 +21,7 @@ async def main():
         dp = Dispatcher(storage=MemoryStorage())
 
         dp.include_router(start_router)
+        dp.include_router(register_router)
         dp.startup.register(start_bot)
 
         print("!!! Bot turned on !!!")

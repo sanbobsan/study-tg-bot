@@ -70,3 +70,14 @@ async def get_user(session: AsyncSession, tg_id: int) -> User | None:
     except SQLAlchemyError as e:
         print(f"!!! Error !!! dao.get_user \n{e}\n")
         await session.rollback()
+
+
+@connection
+async def get_all_users(session: AsyncSession) -> list[User]:
+    try:
+        users = await session.scalars(select(User))
+        return users
+
+    except SQLAlchemyError as e:
+        print(f"!!! Error !!! dao.get_all_users \n{e}\n")
+        await session.rollback()

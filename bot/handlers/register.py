@@ -16,7 +16,7 @@ class Register(StatesGroup):
 
 @register_router.message(F.text, Command("register"))
 async def register(message: Message, state: FSMContext):
-    text = "Enter your real name..."
+    text = "Введи свое настоящее имя"
     await message.answer(text=text)
     await state.set_state(Register.entering_name)
 
@@ -28,7 +28,7 @@ async def name_enter(message: Message, state: FSMContext):
         username=message.from_user.username,
         name=message.text,
     )
-    text = "Cool name, bro"
+    text = "Можешь использовать /menu"
     await message.answer(
         text=text,
         reply_markup=kb.to_menu.as_markup(),

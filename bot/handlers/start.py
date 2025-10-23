@@ -18,10 +18,10 @@ async def echo(message: Message, state: FSMContext):
         name=None,
     )
     if user is None or user.name is None:
-        text = f"Hi, {message.from_user.username}! Please, use /register"
+        text = f"Ку, {message.from_user.username}! Используй /register"
         reply_markup = kb.start_register.as_markup()
     else:
-        text = f"Hi, {user.name}! You can use /menu"
+        text = f"Ку, {user.name}! Используй /menu"
         reply_markup = kb.to_menu.as_markup()
 
     await message.answer(text=text, reply_markup=reply_markup)

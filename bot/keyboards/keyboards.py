@@ -1,5 +1,5 @@
-from aiogram.types import InlineKeyboardButton, KeyboardButton, ReplyKeyboardMarkup
-from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardBuilder
+from aiogram.types import KeyboardButton
+from aiogram.utils.keyboard import ReplyKeyboardBuilder
 
 
 start_register = ReplyKeyboardBuilder()
@@ -12,4 +12,5 @@ menu = ReplyKeyboardBuilder()
 menu.add(
     KeyboardButton(text="/join"),
     KeyboardButton(text="/leave"),
+    KeyboardButton(text="/menu"),
 )

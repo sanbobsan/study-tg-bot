@@ -5,9 +5,9 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
 
-from .bot.data_base.base import create_tables
-from .bot.handlers import router
-from .config import TOKEN
+from bot.data_base.base import create_tables
+from bot.handlers.start import start_router
+from config import TOKEN
 
 
 async def start_bot():
@@ -19,7 +19,7 @@ async def main():
         bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
         dp = Dispatcher(storage=MemoryStorage())
 
-        dp.include_router(router)
+        dp.include_router(start_router)
         dp.startup.register(start_bot)
 
         print("!!! Bot turned on !!!")
@@ -30,7 +30,7 @@ async def main():
         print(f"!!! Error !!! \n{e}\n")
 
     finally:
-        bot.session.close()
+        await bot.session.close()
         print("!!! Bot turned off !!!")
 
 

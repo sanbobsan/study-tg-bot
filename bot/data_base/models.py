@@ -10,5 +10,5 @@ class User(Base):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
-    username: Mapped[str] = mapped_column(String)
+    username: Mapped[str] = mapped_column(String, nullable=True)
     name: Mapped[str] = mapped_column(String, nullable=True)

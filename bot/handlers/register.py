@@ -31,7 +31,7 @@ async def name_enter(message: Message, state: FSMContext):
     text = "Имя записано, можешь использовать /menu"
     await message.answer(
         text=text,
-        reply_markup=kb.to_menu.as_markup(),
+        reply_markup=kb.to_menu.as_markup(resize_keyboard=True),
     )
 
     await state.clear()

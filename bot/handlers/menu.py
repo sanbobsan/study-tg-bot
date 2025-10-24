@@ -11,29 +11,41 @@ queue = Queue()
 
 # TODO: оформление бота
 def get_queue_text() -> str:
-    queue_str = "Очередь\n"
-    for n, user in enumerate(queue.get_queue()):
-        queue_str += f"{n + 1}. {user.name} @{user.username}\n"
+    que, buf = queue.get_queue(), queue.get_buffer()
+    
+    queue_str = "Очередь:\n"
+    for n, user in enumerate(que):
+        username = ""
+        if user.username is not None:
+            username = f"@{user.username}"
+        queue_str += f"{n + 1}. {user.name} {username}\n"
 
     buffer_str = "Буффер:\n"
-    for user in queue.get_buffer():
-        buffer_str += f"{user.name} @{user.username}\n"
+    for user in buf:
+        username = ""
+        if user.username is not None:
+            username = f"@{user.username}"
+        buffer_str += f"{user.name} {username}\n"
 
+    if len(que) == 0:
+        queue_str += "0. Пусто\n"
+    
+    if len(buf) == 0:
+        buffer_str += "Пусто\n"
+        
+    
     text = f"""{queue_str}
 {buffer_str}
-
-/join - присоединиться к буфферу в очередь
-/leave - выйти из очереди и буффера
-
-После попадания в буффер, ты попадешь в очередь, когда ее обновят
-Буффер, перед тем как попасть в очередь мешается"""
+Буффер перемешивается и попадает в конец очереди
+/join - присоединиться к буфферу
+/leave - выйти из буффера"""
     return text
 
 
 @menu_router.message(F.text, Command("menu"))
 async def menu(message: Message):
     text = get_queue_text()
-    await message.answer(text=text, reply_markup=kb.menu.as_markup())
+    await message.answer(text=text, reply_markup=kb.menu.as_markup(resize_keyboard=True))
 
 
 @menu_router.message(F.text, Command("join"))
@@ -41,7 +53,7 @@ async def join(message: Message):
     user = await get_user(message.from_user.id)
     queue.add_user(user)
     text = get_queue_text()
-    await message.answer(text=text, reply_markup=kb.menu.as_markup())
+    await message.answer(text=text, reply_markup=kb.menu.as_markup(resize_keyboard=True))
 
 
 @menu_router.message(F.text, Command("leave"))
@@ -49,7 +61,7 @@ async def leave(message: Message):
     user = await get_user(message.from_user.id)
     queue.del_user(user)
     text = get_queue_text()
-    await message.answer(text=text, reply_markup=kb.menu.as_markup())
+    await message.answer(text=text, reply_markup=kb.menu.as_markup(resize_keyboard=True))
 
 
 # TODO: оповещения людей, когда очередь создается
@@ -58,11 +70,11 @@ async def leave(message: Message):
 async def adm_shuffle(message: Message):
     queue.insert_buffer_in_queue()
     text = "admin\n" + get_queue_text()
-    await message.answer(text=text, reply_markup=kb.menu.as_markup())
+    await message.answer(text=text, reply_markup=kb.menu.as_markup(resize_keyboard=True))
 
 
 @menu_router.message(F.text, Command("admclr"))
 async def adm_clear(message: Message):
-    queue.insert_buffer_in_queue()
+    queue.clear()
     text = "admin\n" + get_queue_text()
-    await message.answer(text=text, reply_markup=kb.menu.as_markup())
+    await message.answer(text=text, reply_markup=kb.menu.as_markup(resize_keyboard=True))

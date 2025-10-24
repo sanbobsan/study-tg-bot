@@ -19,9 +19,9 @@ async def echo(message: Message, state: FSMContext):
     )
     if user is None or user.name is None:
         text = f"Ку, {message.from_user.username}! Используй /register"
-        reply_markup = kb.start_register.as_markup()
+        reply_markup = kb.start_register.as_markup(resize_keyboard=True)
     else:
         text = f"Ку, {user.name}! Используй /menu"
-        reply_markup = kb.to_menu.as_markup()
+        reply_markup = kb.to_menu.as_markup(resize_keyboard=True)
 
     await message.answer(text=text, reply_markup=reply_markup)

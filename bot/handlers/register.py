@@ -28,7 +28,7 @@ async def name_enter(message: Message, state: FSMContext):
         username=message.from_user.username,
         name=message.text,
     )
-    text = "Можешь использовать /menu"
+    text = "Имя записано, можешь использовать /menu"
     await message.answer(
         text=text,
         reply_markup=kb.to_menu.as_markup(),

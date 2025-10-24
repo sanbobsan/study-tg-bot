@@ -13,11 +13,11 @@ queue = Queue()
 def get_queue_text() -> str:
     queue_str = "Очередь\n"
     for n, user in enumerate(queue.get_queue()):
-        queue_str += f"{n + 1}. {user.name} {user.username}\n"
+        queue_str += f"{n + 1}. {user.name} @{user.username}\n"
 
     buffer_str = "Буффер:\n"
     for user in queue.get_buffer():
-        buffer_str += f"{user.name} {user.username}\n"
+        buffer_str += f"{user.name} @{user.username}\n"
 
     text = f"""{queue_str}
 {buffer_str}

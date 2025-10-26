@@ -7,21 +7,21 @@ from aiogram.types import Message
 from bot.data_base.dao import update_user
 from bot.keyboards import keyboards as kb
 
-register_router = Router()
+router = Router()
 
 
 class Register(StatesGroup):
     entering_name = State()
 
 
-@register_router.message(F.text, Command("register"))
+@router.message(F.text, Command("register"))
 async def register(message: Message, state: FSMContext):
     text = "Введи свое настоящее имя"
     await message.answer(text=text)
     await state.set_state(Register.entering_name)
 
 
-@register_router.message(Register.entering_name, F.text)
+@router.message(Register.entering_name, F.text)
 async def name_enter(message: Message, state: FSMContext):
     await update_user(
         tg_id=message.from_user.id,

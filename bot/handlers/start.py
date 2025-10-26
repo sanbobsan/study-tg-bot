@@ -6,10 +6,10 @@ from aiogram.types import Message
 from bot.data_base.dao import set_user
 from bot.keyboards import keyboards as kb
 
-start_router = Router()
+router = Router()
 
 
-@start_router.message(CommandStart())
+@router.message(CommandStart())
 async def echo(message: Message, state: FSMContext):
     await state.clear()
     user = await set_user(

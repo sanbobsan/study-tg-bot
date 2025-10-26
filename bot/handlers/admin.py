@@ -6,11 +6,11 @@ from bot.keyboards import admin as kb
 from bot.qlogic import Queue
 from config import ADMINS
 
-admin_router = Router()
+router = Router()
 queue = Queue()
 
 
-@admin_router.message(Command("admin"), (F.text and F.from_user.id.in_(ADMINS)))
+@router.message(Command("admin"), (F.text and F.from_user.id.in_(ADMINS)))
 async def admin_panel(message: Message):
     await message.answer(
         "ADMIN PANEL", reply_markup=kb.admin.as_markup(resize_keyboard=True)
@@ -18,7 +18,7 @@ async def admin_panel(message: Message):
 
 
 # TODO: оповещения людей, когда очередь создается
-@admin_router.message(F.text, Command("shuffle", "sh"), F.from_user.id.in_(ADMINS))
+@router.message(F.text, Command("shuffle", "sh"), F.from_user.id.in_(ADMINS))
 async def admin_shuffle(message: Message):
     queue.insert_buffer_into_queue()
     await message.answer(
@@ -26,7 +26,7 @@ async def admin_shuffle(message: Message):
     )
 
 
-@admin_router.message(F.text, Command("clear", "clr"), F.from_user.id.in_(ADMINS))
+@router.message(F.text, Command("clear", "clr"), F.from_user.id.in_(ADMINS))
 async def admin_clear(message: Message):
     queue.clear()
     await message.answer(

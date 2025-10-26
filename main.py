@@ -14,9 +14,6 @@ from bot.handlers.menu import menu_router
 from config import TOKEN
 
 
-# TODO: poetry
-
-
 async def start_bot():
     await create_tables()
 

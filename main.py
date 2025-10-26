@@ -9,6 +9,7 @@ from bot.data_base.base import create_tables
 from bot.handlers.start import start_router
 from bot.handlers.register import register_router
 from bot.handlers.menu import menu_router
+from bot.handlers.admin import admin_router
 
 # TODO: нормальный конфиг
 from config import TOKEN
@@ -26,6 +27,7 @@ async def main():
         dp.include_router(start_router)
         dp.include_router(register_router)
         dp.include_router(menu_router)
+        dp.include_router(admin_router)
         dp.startup.register(start_bot)
 
         print("!!! Bot turned on !!!")

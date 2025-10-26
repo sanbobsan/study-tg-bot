@@ -39,26 +39,3 @@ async def leave(message: Message):
         text=text,
         reply_markup=kb.menu.as_markup(resize_keyboard=True),
     )
-
-
-# TODO: отслеживание текущей очереди
-# TODO: оповещения людей, когда очередь создается
-# TODO: создать админ панель
-@menu_router.message(F.text, Command("shf"))
-async def adm_shuffle(message: Message):
-    queue.insert_buffer_into_queue()
-    text = "admin\n" + queue.get_text_for_message()
-    await message.answer(
-        text=text,
-        reply_markup=kb.menu.as_markup(resize_keyboard=True),
-    )
-
-
-@menu_router.message(F.text, Command("clr"))
-async def adm_clear(message: Message):
-    queue.clear()
-    text = "admin\n" + queue.get_text_for_message()
-    await message.answer(
-        text=text,
-        reply_markup=kb.menu.as_markup(resize_keyboard=True),
-    )

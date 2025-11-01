@@ -1,4 +1,4 @@
-from .db import async_session, engine, Base
+from .database import async_session, engine, Base
 
 
 def connection(func):

@@ -4,7 +4,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import Message
 
-from bot.data_base.dao import update_user
+from bot.db.dao import update_user
 from bot.keyboards import keyboards as kb
 
 router = Router()

@@ -1,6 +1,6 @@
 from random import shuffle
 
-from bot.data_base.models import User
+from bot.db.models import User
 
 
 # TODO: Redis?
@@ -13,7 +13,7 @@ class Singleton(type):
         return cls._instances[cls]
 
 
-# TODO: хранение лишь id пользователей в очереди?
+# TODO: хранение лишь tg_id пользователей в очереди?
 # - чтобы при изменении имени информация обновлялась при следующем же вызове
 # - меньше хранить в переменной, но чаще вызывать бд?
 # - оно тогда станет async, стоит ли?
@@ -37,9 +37,9 @@ class Queue(metaclass=Singleton):
         Args:
             user (User): Модель пользователя
         """
-        if user.id not in [user_from_queue.id for user_from_queue in self.__queue] + [
-            user_from_buffer.id for user_from_buffer in self.__buffer
-        ]:
+        if user.tg_id not in [
+            user_from_queue.tg_id for user_from_queue in self.__queue
+        ] + [user_from_buffer.tg_id for user_from_buffer in self.__buffer]:
             self.__buffer.append(user)
 
     def del_user_from_buffer(self, user: User):
@@ -49,7 +49,7 @@ class Queue(metaclass=Singleton):
             user (User): модель пользователя
         """
         for index, user_from_buffer in enumerate(self.__buffer):
-            if user_from_buffer.id == user.id:
+            if user_from_buffer.tg_id == user.tg_id:
                 del self.__buffer[index]
 
     def insert_buffer_into_queue(self):

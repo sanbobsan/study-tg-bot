@@ -2,7 +2,7 @@ from aiogram import F, Router
 from aiogram.filters import Command
 from aiogram.types import Message
 
-from bot.data_base.dao import get_user
+from bot.db.dao import get_user
 from bot.keyboards import keyboards as kb
 from bot.qlogic import Queue
 

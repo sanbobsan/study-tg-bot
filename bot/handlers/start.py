@@ -3,7 +3,7 @@ from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
-from bot.data_base.dao import set_user
+from bot.db.dao import set_user
 from bot.keyboards import keyboards as kb
 
 router = Router()

@@ -2,10 +2,8 @@ import logging
 from typing import Optional
 
 from sqlalchemy import select
-from sqlalchemy.exc import SQLAlchemyError
 
-from .base import connection
-from .database import AsyncSession
+from .database import AsyncSession, connection
 from .models import User
 
 
@@ -30,9 +28,8 @@ async def update_user(
         logging.info(f"User renamed {old_name} -> {name}")
         return user
 
-    except SQLAlchemyError as e:
+    except Exception as e:
         logging.error(e)
-        await session.rollback()
 
 
 @connection
@@ -57,9 +54,8 @@ async def set_user(
         else:
             return user
 
-    except SQLAlchemyError as e:
+    except Exception as e:
         logging.error(e)
-        await session.rollback()
 
 
 @connection
@@ -68,9 +64,8 @@ async def get_user(session: AsyncSession, tg_id: int) -> User | None:
         user = await session.scalar(select(User).filter_by(tg_id=tg_id))
         return user
 
-    except SQLAlchemyError as e:
+    except Exception as e:
         logging.error(e)
-        await session.rollback()
 
 
 @connection
@@ -79,6 +74,5 @@ async def get_all_users(session: AsyncSession) -> list[User]:
         users = await session.scalars(select(User))
         return users
 
-    except SQLAlchemyError as e:
+    except Exception as e:
         logging.error(e)
-        await session.rollback()

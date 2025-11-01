@@ -3,7 +3,7 @@ import logging
 from asyncio.exceptions import CancelledError
 
 from bot.create_bot import bot, dp
-from bot.data_base.base import create_tables
+from bot.db.database import create_tables
 from bot.handlers import admin, menu, register, start
 
 

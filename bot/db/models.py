@@ -1,27 +1,29 @@
-from sqlalchemy import BigInteger, String
+from sqlalchemy import BigInteger, Boolean, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .database import Base
 
 
-# TODO: доверенный пользователь? Хранение списка группы
 class User(Base):
+    """Модель пользователя"""
+
     __tablename__ = "users"
 
     tg_id: Mapped[int] = mapped_column(BigInteger, unique=True, nullable=False)
-    """Id привязанный к телеграмм аккаунту
+    """Id, привязанный к телеграмм аккаунту
     """
     username: Mapped[str] = mapped_column(String, nullable=True)
     """Username аккаунта (@example)
     """
     name: Mapped[str] = mapped_column(String, nullable=True)
-    """Имя указанное пользователем в самом боте
+    """Имя, указанное пользователем в самом боте
+    """
+    has_desire: Mapped[bool] = mapped_column(Boolean, default=False)
+    """Хочет ли пользователь участвовать в очереди
+    """
+    trusted: Mapped[bool] = mapped_column(Boolean, default=False)
+    """Является ли пользователем доверенным
     """
 
-    # Под вопросом
-    # acc_name: Mapped[str] = mapped_column(String, nullable=False)
-    # """Имя полученное от имени аккаунта пользователя
-    # """
-
-    def __repr__(self):
-        return f"<User(id={self.id}, tg_id={self.telegram_id}, username='{self.username}', name='{self.name}')>"
+    def __repr__(self) -> str:
+        return f"<User(id={self.id}, tg_id={self.tg_id}, username='{self.username}', name='{self.name}', has_desire='{self.has_desire}', trusted='{self.trusted}')>"

@@ -10,7 +10,7 @@ to_menu.add(KeyboardButton(text="/menu"))
 
 menu = ReplyKeyboardBuilder()
 menu.add(
-    KeyboardButton(text="/join"),
-    KeyboardButton(text="/leave"),
+    KeyboardButton(text="/yes"),
+    KeyboardButton(text="/no"),
     KeyboardButton(text="/menu"),
 )

@@ -14,6 +14,7 @@ class Register(StatesGroup):
     entering_name = State()
 
 
+# TODO: /cancel
 @router.message(F.text, Command("register"))
 async def register(message: Message, state: FSMContext):
     text = "Введи свое настоящее имя"

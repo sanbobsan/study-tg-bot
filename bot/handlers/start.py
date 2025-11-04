@@ -3,20 +3,20 @@ from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
-from bot.db.dao import set_user
+from bot.db.dao import create_user
 from bot.keyboards import keyboards as kb
 
 router = Router()
 
 
 @router.message(CommandStart())
-async def echo(message: Message, state: FSMContext):
+async def cmd_start(message: Message, state: FSMContext):
     await state.clear()
-    user = await set_user(
+    user = await create_user(
         tg_id=message.from_user.id,
         username=message.from_user.username,
-        name=None,
     )
+
     if user is None or user.name is None:
         text = f"Ку, {message.from_user.username}! Используй /register"
         reply_markup = kb.start_register.as_markup(resize_keyboard=True)

@@ -14,25 +14,34 @@ class Register(StatesGroup):
     entering_name = State()
 
 
-# TODO: /cancel
-@router.message(F.text, Command("register"))
+@router.message(Command("register", "name"))
 async def register(message: Message, state: FSMContext):
     text = "Введи свое настоящее имя"
     await message.answer(text=text)
     await state.set_state(Register.entering_name)
 
 
-@router.message(Register.entering_name, F.text)
-async def name_enter(message: Message, state: FSMContext):
-    await update_user(
-        tg_id=message.from_user.id,
-        username=message.from_user.username,
-        name=message.text,
-    )
-    text = "Имя записано, можешь использовать /menu"
+@router.message(Register.entering_name, Command("cancel"))
+async def cancel(message: Message, state: FSMContext):
+    await state.clear()
+    text = "Изменение имени отменено"
     await message.answer(
         text=text,
         reply_markup=kb.to_menu.as_markup(resize_keyboard=True),
     )
 
+
+@router.message(Register.entering_name, F.text)
+async def enter_name(message: Message, state: FSMContext):
+    await update_user(
+        tg_id=message.from_user.id,
+        username=message.from_user.username,
+        name=message.text,
+    )
+
     await state.clear()
+    text = "Имя записано, можешь использовать /menu"
+    await message.answer(
+        text=text,
+        reply_markup=kb.to_menu.as_markup(resize_keyboard=True),
+    )

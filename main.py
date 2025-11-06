@@ -5,10 +5,14 @@ from asyncio.exceptions import CancelledError
 from bot.create_bot import bot, dp
 from bot.db.database import create_tables
 from bot.handlers import admin, menu, register, start
+from bot.utils.queue import Queue
 
 
 async def start_bot():
     await create_tables()
+    queue = Queue()
+    await queue.create_queue()
+    queue.shuffle()
 
 
 async def main():

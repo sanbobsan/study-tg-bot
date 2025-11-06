@@ -11,29 +11,31 @@ queue = Queue()
 
 
 # TODO: /next чтобы самому можно было нажимать
-# TODO: оформление бота, верстка
-@router.message(F.text, Command("menu"))
+@router.message(F.text.lower().in_(["меню", "menu"]))
+@router.message(Command("menu"))
 async def menu(message: Message):
-    text = "Очередь\n" + await queue.build_queue_text()
+    text = await queue.build_queue_text()
     await message.answer(
         text=text, reply_markup=kb.menu.as_markup(resize_keyboard=True)
     )
 
 
-@router.message(F.text, Command("yes", "y"))
+@router.message(F.text.lower() == "хочу")
+@router.message(Command("yes", "y"))
 async def yes(message: Message):
     await update_user(tg_id=message.from_user.id, has_desire=True)
-    text = "Очередь\n" + await queue.build_queue_text()
+    text = "🟢 Ты добавлен в очередь!\n\n" + await queue.build_queue_text()
     await message.answer(
         text=text,
         reply_markup=kb.menu.as_markup(resize_keyboard=True),
     )
 
 
-@router.message(F.text, Command("no", "n"))
+@router.message(F.text.lower() == "не хочу")
+@router.message(Command("no", "n"))
 async def no(message: Message):
     await update_user(tg_id=message.from_user.id, has_desire=False)
-    text = "Очередь\n" + await queue.build_queue_text()
+    text = "🔴 Ты удалён из очереди!\n\n" + await queue.build_queue_text()
     await message.answer(
         text=text,
         reply_markup=kb.menu.as_markup(resize_keyboard=True),

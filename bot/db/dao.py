@@ -125,3 +125,7 @@ async def update_user(
 
     except Exception as e:
         logging.error(e)
+
+
+# TODO: get_desire_status
+# TODO: update user by row_id for admin panel

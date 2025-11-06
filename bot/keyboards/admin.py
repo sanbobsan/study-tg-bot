@@ -3,7 +3,5 @@ from aiogram.utils.keyboard import ReplyKeyboardBuilder
 
 
 admin = ReplyKeyboardBuilder()
-admin.add(KeyboardButton(text="/create"))
-admin.add(KeyboardButton(text="/shuffle"))
-admin.add(KeyboardButton(text="/next"))
-admin.add(KeyboardButton(text="/menu"))
+admin.row(KeyboardButton(text="/next"), KeyboardButton(text="/menu"))
+admin.row(KeyboardButton(text="/create"), KeyboardButton(text="/shuffle"))

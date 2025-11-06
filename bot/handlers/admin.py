@@ -10,44 +10,47 @@ router = Router()
 queue = Queue()
 
 
-# TODO: управление очередью админ панелью
-# TODO: фильтр для админ панели
-# TODO: оповещения людей, когда очередь создается
-@router.message(F.text, Command("admin", "adm"), F.from_user.id.in_(config.ADMINS))
+# TODO: свой полноценный фильтр для админ панели
+@router.message(Command("admin", "adm"), F.from_user.id.in_(config.ADMINS))
 async def admin_panel(message: Message):
+    text = "⚙️ Панель администратора ⚙️\n\nДоступные команды:\n• /create — создать очередь\n• /shuffle — перемешать очередь\n• /next — перейти к следующему"
     await message.answer(
-        "ADMIN PANEL\n/cr, /sh, /next",
+        text=text,
         reply_markup=kb.admin.as_markup(resize_keyboard=True),
     )
 
 
-@router.message(F.text, Command("create", "cr"), F.from_user.id.in_(config.ADMINS))
-async def create(message: Message):
+@router.message(Command("create", "cr"), F.from_user.id.in_(config.ADMINS))
+async def adm_create(message: Message):
     await queue.create_queue()
-    text = "Created\n" + str(await queue.build_queue_text())
+    text = "↩️ Очередь успешно создана! ⚙️\n\n" + str(await queue.build_queue_text())
     await message.answer(
         text=text,
         reply_markup=kb.admin.as_markup(resize_keyboard=True),
     )
 
 
-@router.message(
-    F.text, Command("shuffle", "shf", "sh"), F.from_user.id.in_(config.ADMINS)
-)
-async def admin_shuffle(message: Message):
+@router.message(Command("shuffle", "shf", "sh"), F.from_user.id.in_(config.ADMINS))
+async def adm_shuffle(message: Message):
     queue.shuffle()
-    text = "Shuffled\n" + str(await queue.build_queue_text())
+    text = "🔀 Очередь перемешана! ⚙️\n\n" + str(await queue.build_queue_text())
     await message.answer(
         text=text,
         reply_markup=kb.admin.as_markup(resize_keyboard=True),
     )
 
 
-@router.message(F.text, Command("next"), F.from_user.id.in_(config.ADMINS))
-async def next(message: Message):
+@router.message(Command("next"), F.from_user.id.in_(config.ADMINS))
+async def adm_next(message: Message):
     await queue.next()
-    text = "Nexted\n" + str(await queue.build_queue_text())
+    text = "➡️ Переход к следующему выполнен! ⚙️\n\n" + str(
+        await queue.build_queue_text()
+    )
     await message.answer(
         text=text,
         reply_markup=kb.admin.as_markup(resize_keyboard=True),
     )
+
+
+# TODO: /rename, /change name, /change desire, /trust, /get_ids управление очередью админ панелью
+# TODO: /notify, оповещения людей, когда очередь создается

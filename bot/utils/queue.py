@@ -38,17 +38,22 @@ class Queue(metaclass=Singleton):
     async def next(self):
         """Пролистывает список до следуюшего желающего пользователя, пропуская тех кто не желает"""
         # Бексонечный цикл, если никто не хочет
+        if not self._queue:
+            return
         self._next()
+        print("goooooo")
         user = await get_user(self._queue[0])
         while not user.has_desire:
             self._next()
             user = await get_user(self._queue[0])
+            print("goooooo")
 
     async def create_queue(self):
         """Создает очередь из пользователей из бд"""
         users = await get_all_users()
         self._queue = [user.tg_id for user in users]
 
+    # TODO: (has_desire_only: bool = False)
     async def build_queue_text(self) -> str:
         """Возвращает список из пользователей в очереди
 
@@ -58,11 +63,13 @@ class Queue(metaclass=Singleton):
             2. Максим @username не хочет
         """
         users = [await get_user(tg_id) for tg_id in self._queue]
-        result = ""
+
+        if not users:
+            return "✨ Очередь пуста ✨"
+
+        result = "✨ Текущая очередь ✨\n"
         for index, user in enumerate(users):
-            result += f"{index + 1}. {user.name} @{user.username}"
-            if not user.has_desire:
-                result += " не"
-            result += " хочет\n"
+            status = "🟢 хочет" if user.has_desire else "🔴 не хочет"
+            result += f"{index + 1}. {user.name} {status} @{user.username}\n"
 
         return result

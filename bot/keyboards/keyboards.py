@@ -3,14 +3,14 @@ from aiogram.utils.keyboard import ReplyKeyboardBuilder
 
 
 start_register = ReplyKeyboardBuilder()
-start_register.add(KeyboardButton(text="/register"))
+start_register.add(KeyboardButton(text="Указать имя"))
 
 to_menu = ReplyKeyboardBuilder()
-to_menu.add(KeyboardButton(text="/menu"))
+to_menu.add(KeyboardButton(text="Меню"))
 
 menu = ReplyKeyboardBuilder()
-menu.add(
-    KeyboardButton(text="/yes"),
-    KeyboardButton(text="/no"),
-    KeyboardButton(text="/menu"),
+menu.row(
+    KeyboardButton(text="Хочу"),
+    KeyboardButton(text="Не хочу"),
 )
+menu.add(KeyboardButton(text="Меню"))

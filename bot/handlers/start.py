@@ -18,10 +18,10 @@ async def cmd_start(message: Message, state: FSMContext):
     )
 
     if user is None or user.name is None:
-        text = f"Ку, {message.from_user.username}! Используй /register"
+        text = f"Привет, {message.from_user.full_name}! ✨\n\nДля начала нужно указать имя. Используй кнопку ниже или /name для этого"
         reply_markup = kb.start_register.as_markup(resize_keyboard=True)
     else:
-        text = f"Ку, {user.name}! Используй /menu"
+        text = f"С возвращением, {user.name}! ✨\n\nИспользуй кнопку ниже или /menu, чтобы увидеть текущую очередь."
         reply_markup = kb.to_menu.as_markup(resize_keyboard=True)
 
     await message.answer(text=text, reply_markup=reply_markup)

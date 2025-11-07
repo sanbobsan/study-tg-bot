@@ -69,7 +69,8 @@ class Queue(metaclass=Singleton):
 
         result = "✨ Текущая очередь ✨\n"
         for index, user in enumerate(users):
+            username = f"@{user.username}" if user.username is not None else ""
             status = "🟢 хочет" if user.has_desire else "🔴 не хочет"
-            result += f"{index + 1}. {user.name} {status} @{user.username}\n"
+            result += f"{index + 1}. {user.name} {status} {username}\n"
 
         return result

@@ -15,6 +15,7 @@ async def cmd_start(message: Message, state: FSMContext):
     user = await create_user(
         tg_id=message.from_user.id,
         username=message.from_user.username,
+        name=message.from_user.full_name,
     )
 
     if user is None or user.name is None:

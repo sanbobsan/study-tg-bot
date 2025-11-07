@@ -16,7 +16,8 @@ class User(Base):
     """Username аккаунта (@example)
     """
     name: Mapped[str] = mapped_column(String, nullable=True)
-    """Имя, указанное пользователем в самом боте
+    """Имя пользователя, указанное пользователем в самом боте, 
+    или, если пользователь не указывал, то берет имя у аккаунта
     """
     has_desire: Mapped[bool] = mapped_column(Boolean, default=False)
     """Хочет ли пользователь участвовать в очереди

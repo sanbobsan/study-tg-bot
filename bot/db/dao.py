@@ -29,6 +29,7 @@ async def create_user(
     session: AsyncSession,
     tg_id: int,
     username: str | None = None,
+    name: str | None = None,
 ) -> User | None:
     """Создает, добавляет пользователя в бд, если такого нет.
     Возвращает пользователя, если найден или None, если создан
@@ -37,6 +38,7 @@ async def create_user(
         session (AsyncSession): Объект сессии
         tg_id (int): Id, привязанный к телеграмм аккаунту
         username (str | None, optional): Username аккаунта (@example). Defaults to None
+        name (str | None, optional): Имя пользователя. Defaults to None
 
     Returns:
         User: Найденный пользователь
@@ -50,6 +52,8 @@ async def create_user(
         new_user = User(tg_id=tg_id, username=username)
         if username is not None:
             new_user.username = username
+        if name is not None:
+            new_user.name = name
         session.add(new_user)
         await session.commit()
         logging.info(f"User created {tg_id} @{username}")

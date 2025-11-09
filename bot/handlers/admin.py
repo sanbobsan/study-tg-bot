@@ -7,6 +7,7 @@ from bot.db.dao import get_all_users, update_user_by_id
 from bot.db.models import User
 from bot.keyboards import admin as kb
 from bot.utils.queue import Queue
+from bot.utils.broadcaster import send_queue
 from config import config
 
 router = Router()
@@ -23,9 +24,10 @@ async def admin_panel(message: Message):
         "Управление очередью:\n"
         " • /create, /cr — создать очередь\n"
         " • /shuffle, /shf — перемешать очередь\n"
-        " • /next — перейти к следующему\n\n"
+        " • /next — перейти к следующему\n"
         "Управление пользователями:\n"
         " • /show, /sh — показать всех пользователей\n"
+        " • /send_queue — отправить доверенным пользователям актуальную очередь\n\n"
         " • /trust, /true <id> — сделать пользователя доверенным\n"
         " • /untrust <id> — не доверять полльзователю (он не будет участвовать в очереди)\n"
     )
@@ -37,6 +39,7 @@ async def admin_panel(message: Message):
     )
 
 
+# region Queue managment
 @router.message(Command("create", "cr"), F.from_user.id.in_(config.ADMINS))
 async def adm_create(message: Message):
     """Создает очередь из существующих пользователей, отправляет отчет"""
@@ -72,6 +75,10 @@ async def adm_next(message: Message):
     )
 
 
+# endregion
+
+
+# region Users managment
 @router.message(Command("show", "list", "sh", "ls"), F.from_user.id.in_(config.ADMINS))
 async def adm_show(message: Message):
     """Отправляет список всех пользователей бота с их параметрами"""
@@ -111,7 +118,19 @@ async def adm_show(message: Message):
     )
 
 
-# TODO: /trust и /untrust имеет очень схожую природу, объеднить
+# TODO: /send с возможностью писать от имени бота определенным пользователям
+@router.message(Command("send_queue"), F.from_user.id.in_(config.ADMINS))
+async def adm_send_queue(message: Message):
+    """Отправляет доверенным пользователям актуальную очередь"""
+    await send_queue()
+    text = "💬 Актуальная очередь отправлена доверенным пользователям ⚙️\n\n"
+    await message.answer(
+        text=text,
+        reply_markup=kb.admin.as_markup(resize_keyboard=True),
+    )
+
+
+# TODO: /trust и /untrust имеет очень схожую природу, объединить
 @router.message(Command("trust", "true"), F.from_user.id.in_(config.ADMINS))
 async def adm_trust(message: Message, command: CommandObject):
     """Делает пользователя доверенным по его id"""
@@ -201,6 +220,8 @@ async def adm_untrust(message: Message, command: CommandObject):
         reply_markup=kb.admin.as_markup(resize_keyboard=True),
     )
 
+
+# endregion
 
 # TODO: /rename, /change name, /change desire управление очередью админ панелью
 # TODO: /notify, оповещения людей, когда очередь создается

@@ -28,6 +28,7 @@ async def get_user(session: AsyncSession, tg_id: int) -> User | None:
 async def create_user(
     session: AsyncSession,
     tg_id: int,
+    chat_id: int,
     username: str | None = None,
     name: str | None = None,
 ) -> User | None:
@@ -49,7 +50,7 @@ async def create_user(
             logging.info(f"User already exists {tg_id} @{user.username} {user.name}")
             return user
 
-        new_user = User(tg_id=tg_id, username=username)
+        new_user = User(tg_id=tg_id, chat_id=chat_id)
         if username is not None:
             new_user.username = username
         if name is not None:
@@ -63,7 +64,7 @@ async def create_user(
 
 
 @connection
-async def get_all_users(session: AsyncSession):
+async def get_all_users(session: AsyncSession) -> list[User]:
     """Получает всех пользователей из бд
 
     Args:
@@ -80,7 +81,7 @@ async def get_all_users(session: AsyncSession):
 
 
 @connection
-async def get_all_trusted_users(session: AsyncSession):
+async def get_all_trusted_users(session: AsyncSession) -> list[User]:
     """Получает доверенных пользователей из бд
 
     Args:

@@ -14,6 +14,7 @@ async def cmd_start(message: Message, state: FSMContext):
     await state.clear()
     user = await create_user(
         tg_id=message.from_user.id,
+        chat_id=message.chat.id,
         username=message.from_user.username,
         name=message.from_user.full_name,
     )

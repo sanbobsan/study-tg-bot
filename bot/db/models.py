@@ -23,5 +23,9 @@ class User(Base):
     chat_id: Mapped[int] = mapped_column(BigInteger, unique=True, nullable=False)
     """Id, привязанный к чату с пользователем"""
 
+    # TODO: DO last_queue_message_id, стоит ли?
+    # для того, чтобы при каждом обновлении очереди
+    # актуализировать последнее сообщение с ней у пользователя
+
     def __repr__(self) -> str:
         return f"<User(id={self.id}, tg_id={self.tg_id}, username='{self.username}', name='{self.name}', has_desire='{self.has_desire}', trusted='{self.trusted}')>"

@@ -65,7 +65,7 @@ async def adm_shuffle(message: Message):
 @router.message(Command("next"), F.from_user.id.in_(config.ADMINS))
 async def adm_next(message: Message):
     """Прокручивает очередь до следующего, отправляет отчет"""
-    await queue.next()
+    await queue.next_desiring()
     text = "➡️ Переход к следующему выполнен! ⚙️\n\n" + str(
         await queue.build_queue_text()
     )
@@ -130,6 +130,7 @@ async def adm_send_queue(message: Message):
     )
 
 
+# TODO: DO /trust_new доверять ли новым пользователям
 # TODO: /trust и /untrust имеет очень схожую природу, объединить
 @router.message(Command("trust", "true"), F.from_user.id.in_(config.ADMINS))
 async def adm_trust(message: Message, command: CommandObject):
@@ -223,5 +224,5 @@ async def adm_untrust(message: Message, command: CommandObject):
 
 # endregion
 
-# TODO: /rename, /change name, /change desire управление очередью админ панелью
-# TODO: /notify, оповещения людей, когда очередь создается
+# TODO: DO /rename <id> <new_name>
+# TODO: /change_desire <id> <desire: bool>

@@ -42,7 +42,7 @@ async def enter_name(message: Message, state: FSMContext):
     )
     await state.clear()
 
-    text = f"✨ Отлично! Твоё имя '{message.text}' сохранено\n\nИспользуй кнопку ниже или /menu, чтобы перейти в меню"
+    text = "✨ Отлично! Твоё имя сохранено\n\nИспользуй кнопку ниже или /menu, чтобы перейти в меню"
     await message.answer(
         text=text,
         reply_markup=kb.to_menu.as_markup(resize_keyboard=True),

@@ -221,3 +221,4 @@ async def update_user_by_id(
 
 
 # TODO: get_desire_status
+# TODO: new DAO get_all_trusted_user_ids

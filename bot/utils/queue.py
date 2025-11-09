@@ -1,6 +1,6 @@
 from random import shuffle
 
-from bot.db.dao import get_all_users, get_user
+from bot.db.dao import get_all_trusted_users, get_user
 
 
 class Singleton(type):
@@ -50,7 +50,7 @@ class Queue(metaclass=Singleton):
 
     async def create_queue(self):
         """Создает очередь из пользователей из бд"""
-        users = await get_all_users()
+        users = await get_all_trusted_users()
         self._queue = [user.tg_id for user in users]
 
     # TODO: (has_desire_only: bool = False)

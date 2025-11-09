@@ -80,56 +80,143 @@ async def get_all_users(session: AsyncSession):
 
 
 @connection
+async def get_all_trusted_users(session: AsyncSession):
+    """Получает доверенных пользователей из бд
+
+    Args:
+        session (AsyncSession): Объект сессии
+
+    Returns:
+        Sequence[User]: Последовательность из доверенных пользователей
+    """
+    try:
+        users = (await session.scalars(select(User).filter_by(trusted=True))).all()
+        return users
+    except Exception as e:
+        logging.error(e)
+
+
+def _apply_user_updates(
+    user: User,
+    username: str | None = None,
+    name: str | None = None,
+    has_desire: bool | None = None,
+    trusted: bool | None = None,
+) -> None:
+    """Применяет обновления к объекту пользователя
+
+    Args:
+        user (User): Объект пользователя для обновления
+        username (str | None, optional): Username аккаунта (@example). Defaults to None.
+        name (str | None, optional): Имя, указанное пользователем в самом боте. Defaults to None.
+        has_desire (bool | None, optional): Хочет ли пользователь участвовать в очереди. Defaults to None.
+        trusted (bool | None, optional): Является ли пользователь доверенным. Defaults to None.
+    """
+    if username is not None:
+        user.username = username
+
+    if name is not None:
+        old_name = user.name
+        logging.info(
+            f"User renamed id={user.id} tg_id={user.tg_id} @{user.username} {old_name} -> {name}"
+        )
+        user.name = name
+
+    if has_desire is not None:
+        user.has_desire = has_desire
+
+    if trusted is not None:
+        user.trusted = trusted
+        logging.info(
+            f"User trust has changed id={user.id} tg_id={user.tg_id} @{user.username}"
+        )
+
+
+@connection
 async def update_user(
     session: AsyncSession,
     tg_id: int,
-    username: str = None,
-    name: int = None,
-    has_desire: bool = None,
-    trusted: bool = None,
+    username: str | None = None,
+    name: str | None = None,
+    has_desire: bool | None = None,
+    trusted: bool | None = None,
 ) -> User | None:
-    """Обновляет пользователя, если найден
+    """Обновляет пользователя по tg_id, если найден
     - Все поля необязательны, кроме tg_id
 
     Args:
         session (AsyncSession): Объект сессии
         tg_id (int): Id, привязанный к телеграмм аккаунту
-        username (str, optional): Username аккаунта (@example). Defaults to None.
-        name (int, optional): Имя, указанное пользователем в самом боте. Defaults to None.
-        has_desire (bool, optional): Хочет ли пользователь участвовать в очереди. Defaults to None.
-        trusted (bool, optional):Является ли пользователем доверенным. Defaults to None.
+        username (str | None, optional): Username аккаунта (@example). Defaults to None.
+        name (str | None, optional): Имя, указанное пользователем в самом боте. Defaults to None.
+        has_desire (bool | None, optional): Хочет ли пользователь участвовать в очереди. Defaults to None.
+        trusted (bool | None, optional): Является ли пользователь доверенным. Defaults to None.
 
     Returns:
-        User: Обновленный пользователь
+        User | None: Обновленный пользователь или None, если не найден
     """
     try:
         user = await session.scalar(select(User).filter_by(tg_id=tg_id))
 
         if user is None:
-            logging.error(f"User not founded {tg_id} @{username}")
+            logging.error(f"User not found tg_id={tg_id} @{username}")
             return None
 
-        if username is not None:
-            user.username = username
-
-        if name is not None:
-            old_name = user.name
-            logging.info(f"User renamed {tg_id} @{user.username} {old_name} -> {name}")
-            user.name = name
-
-        if has_desire is not None:
-            user.has_desire = has_desire
-
-        if trusted is not None:
-            user.trusted = trusted
-            logging.info(f"User trust has changed {tg_id} @{user.username}")
+        _apply_user_updates(
+            user, username=username, name=name, has_desire=has_desire, trusted=trusted
+        )
 
         await session.commit()
+        await session.refresh(user)
         return user
 
     except Exception as e:
         logging.error(e)
+        return None
+
+
+@connection
+async def update_user_by_id(
+    session: AsyncSession,
+    user_id: int,
+    username: str | None = None,
+    name: str | None = None,
+    has_desire: bool | None = None,
+    trusted: bool | None = None,
+) -> User | None:
+    """Обновляет пользователя по внутреннему id, если найден
+    - Все поля необязательны, кроме user_id
+    - Предназначена для использования в админ-панели
+
+    Args:
+        session (AsyncSession): Объект сессии
+        user_id (int): Внутренний id пользователя (row_id, primary key)
+        username (str | None, optional): Username аккаунта (@example). Defaults to None.
+        name (str | None, optional): Имя, указанное пользователем в самом боте. Defaults to None.
+        has_desire (bool | None, optional): Хочет ли пользователь участвовать в очереди. Defaults to None.
+        trusted (bool | None, optional): Является ли пользователь доверенным. Defaults to None.
+
+    Returns:
+        User | None: Обновленный пользователь или None, если не найден
+    """
+    try:
+        user = await session.scalar(select(User).filter_by(id=user_id))
+
+        if user is None:
+            logging.error(f"User not found id={user_id}")
+            return None
+
+        _apply_user_updates(
+            user, username=username, name=name, has_desire=has_desire, trusted=trusted
+        )
+
+        await session.commit()
+        await session.refresh(user)
+        return user
+
+    except Exception as e:
+        logging.error(e)
+        return None
 
 
 # TODO: get_desire_status
-# TODO: update user by row_id for admin panel

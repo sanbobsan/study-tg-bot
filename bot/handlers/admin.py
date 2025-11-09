@@ -1,8 +1,9 @@
 from aiogram import F, Router
 from aiogram.filters import Command
+from aiogram.filters.command import CommandObject
 from aiogram.types import Message
 
-from bot.db.dao import get_all_users
+from bot.db.dao import get_all_users, update_user_by_id
 from bot.db.models import User
 from bot.keyboards import admin as kb
 from bot.utils.queue import Queue
@@ -20,14 +21,19 @@ async def admin_panel(message: Message):
         "⚙️ Панель администратора ⚙️\n"
         "Доступные команды:\n\n"
         "Управление очередью:\n"
-        " • /create — создать очередь\n • /shuffle — перемешать очередь\n • /next — перейти к следующему\n\n"
+        " • /create, /cr — создать очередь\n"
+        " • /shuffle, /shf — перемешать очередь\n"
+        " • /next — перейти к следующему\n\n"
         "Управление пользователями:\n"
-        " • /show — показать всех пользователей\n"
+        " • /show, /sh — показать всех пользователей\n"
+        " • /trust, /true <id> — сделать пользователя доверенным\n"
+        " • /untrust <id> — не доверять полльзователю (он не будет участвовать в очереди)\n"
     )
 
     await message.answer(
         text=text,
         reply_markup=kb.admin.as_markup(resize_keyboard=True),
+        parse_mode=None,
     )
 
 
@@ -90,9 +96,8 @@ async def adm_show(message: Message):
         if user.username:
             user_info += f" @{user.username}"
         user_info += " 🟢 хочет" if user.has_desire else " 🔴 не хочет"
-        user_info += "\n"
         if not user.trusted:
-            user_info += "⬆️ 🚫 Не доверенный 🚫 ⬆️"
+            user_info += "\n⬆️ 🚫 Не доверенный 🚫 ⬆️"
         user_info += "\n"
         return user_info
 
@@ -106,5 +111,96 @@ async def adm_show(message: Message):
     )
 
 
-# TODO: /rename, /change name, /change desire, /trust управление очередью админ панелью
+# TODO: /trust и /untrust имеет очень схожую природу, объеднить
+@router.message(Command("trust", "true"), F.from_user.id.in_(config.ADMINS))
+async def adm_trust(message: Message, command: CommandObject):
+    """Делает пользователя доверенным по его id"""
+
+    command_args = command.args.split() if command.args else []
+
+    if not command_args:
+        text = (
+            "❌ Ошибка: не указан id пользователя ⚙️\n\n"
+            "Использование: /trust <id> (/show, чтобы получить id)\n"
+            "Можно указать несколько id: /trust 1 2 3"
+        )
+        await message.answer(
+            text=text,
+            reply_markup=kb.admin.as_markup(resize_keyboard=True),
+            parse_mode=None,
+        )
+        return
+
+    results = []
+    for arg in command_args:
+        try:
+            user_id = int(arg)
+            updated_user = await update_user_by_id(user_id=user_id, trusted=True)
+
+            if updated_user is None:
+                results.append(f"❌ Пользователь с id={user_id} не найден")
+            else:
+                name_info = f" {updated_user.name}" if updated_user.name else ""
+                username_info = (
+                    f" @{updated_user.username}" if updated_user.username else ""
+                )
+                results.append(
+                    f"✅ Доверяем ользователю id={user_id}{name_info}{username_info}"
+                )
+        except ValueError:
+            results.append(f'❌ "{arg}" не является числом')
+
+    text = "🔒 Результат ⚙️\n\n" + "\n".join(results)
+    await message.answer(
+        text=text,
+        reply_markup=kb.admin.as_markup(resize_keyboard=True),
+    )
+
+
+@router.message(Command("untrust"), F.from_user.id.in_(config.ADMINS))
+async def adm_untrust(message: Message, command: CommandObject):
+    """Делает пользователя недоверенным по его id"""
+
+    command_args = command.args.split() if command.args else []
+
+    if not command_args:
+        text = (
+            "❌ Ошибка: не указан id пользователя ⚙️\n\n"
+            "Использование: /untrust <id> (/show, чтобы получить id)\n"
+            "Можно указать несколько id: /untrust 1 2 3"
+        )
+        await message.answer(
+            text=text,
+            reply_markup=kb.admin.as_markup(resize_keyboard=True),
+            parse_mode=None,
+        )
+        return
+
+    results = []
+    for arg in command_args:
+        try:
+            user_id = int(arg)
+            updated_user = await update_user_by_id(user_id=user_id, trusted=False)
+
+            if updated_user is None:
+                results.append(f"❌ Пользователь с id={user_id} не найден")
+            else:
+                name_info = f" {updated_user.name}" if updated_user.name else ""
+                username_info = (
+                    f" @{updated_user.username}" if updated_user.username else ""
+                )
+                results.append(
+                    f"❎ Не доверяем пользователю id={user_id}{name_info}{username_info}"
+                )
+        except ValueError:
+            results.append(f'❌ "{arg}" не является числом')
+
+    text = "🔒 Результат ⚙️\n\n" + "\n".join(results)
+    await message.answer(
+        text=text,
+        reply_markup=kb.admin.as_markup(resize_keyboard=True),
+    )
+
+
+# TODO: /rename, /change name, /change desire управление очередью админ панелью
 # TODO: /notify, оповещения людей, когда очередь создается

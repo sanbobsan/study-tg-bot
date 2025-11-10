@@ -11,7 +11,7 @@ from bot.utils.queue import Queue
 
 async def start_bot():
     await create_tables()
-    await BotSettingsDAO.set_bool_setting("trust_new", True)
+    await BotSettingsDAO.get_bool_setting(name="trust_new", default=True)
     queue = Queue()
     await queue.create_queue()
     queue.shuffle()

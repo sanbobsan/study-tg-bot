@@ -46,9 +46,13 @@ async def create_user(
         User: Найденный пользователь
     """
     try:
-        user = await get_user(tg_id=tg_id)
+        user = await session.scalar(select(User).filter_by(tg_id=tg_id))
         if user is not None:
+            # need this, because chat_id added, when users already exists
+            user.chat_id = chat_id
             logging.info(f"User already exists {tg_id} @{user.username} {user.name}")
+            await session.commit()
+            await session.refresh(user)
             return user
 
         new_user = User(tg_id=tg_id, chat_id=chat_id)

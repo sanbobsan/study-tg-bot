@@ -10,20 +10,30 @@ class User(Base):
     __tablename__ = "users"
 
     tg_id: Mapped[int] = mapped_column(BigInteger, unique=True, nullable=False)
-    """Id, привязанный к телеграмм аккаунту
-    """
+    """Id, привязанный к телеграмм аккаунту"""
     username: Mapped[str] = mapped_column(String, nullable=True)
-    """Username аккаунта (@example)
-    """
+    """Username аккаунта (@example)"""
     name: Mapped[str] = mapped_column(String, nullable=True)
-    """Имя, указанное пользователем в самом боте
-    """
+    """Имя пользователя, указанное пользователем в самом боте, 
+    или, если пользователь не указывал, то берет имя у аккаунта"""
     has_desire: Mapped[bool] = mapped_column(Boolean, default=False)
-    """Хочет ли пользователь участвовать в очереди
-    """
+    """Хочет ли пользователь участвовать в очереди"""
     trusted: Mapped[bool] = mapped_column(Boolean, default=False)
-    """Является ли пользователем доверенным
-    """
+    """Является ли пользователем доверенным"""
+    chat_id: Mapped[int] = mapped_column(BigInteger, unique=True, nullable=False)
+    """Id, привязанный к чату с пользователем"""
 
     def __repr__(self) -> str:
         return f"<User(id={self.id}, tg_id={self.tg_id}, username='{self.username}', name='{self.name}', has_desire='{self.has_desire}', trusted='{self.trusted}')>"
+
+
+class BotSetting(Base):
+    __tablename__ = "bot_settings"
+
+    name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    """Название, ключ настройки"""
+    value: Mapped[str] = mapped_column(String, nullable=False)
+    """Значение настройки"""
+
+    def __repr__(self) -> str:
+        return f"BotSetting(name='{self.name}', value='{self.value}')"

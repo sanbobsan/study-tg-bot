@@ -3,7 +3,7 @@ import logging
 from sqlalchemy import select
 
 from .database import AsyncSession, connection
-from .models import User
+from .models import BotSetting, User
 
 
 @connection
@@ -28,7 +28,10 @@ async def get_user(session: AsyncSession, tg_id: int) -> User | None:
 async def create_user(
     session: AsyncSession,
     tg_id: int,
+    chat_id: int,
     username: str | None = None,
+    name: str | None = None,
+    trusted: bool | None = None,
 ) -> User | None:
     """Создает, добавляет пользователя в бд, если такого нет.
     Возвращает пользователя, если найден или None, если создан
@@ -37,19 +40,28 @@ async def create_user(
         session (AsyncSession): Объект сессии
         tg_id (int): Id, привязанный к телеграмм аккаунту
         username (str | None, optional): Username аккаунта (@example). Defaults to None
+        name (str | None, optional): Имя пользователя. Defaults to None
 
     Returns:
         User: Найденный пользователь
     """
     try:
-        user = await get_user(tg_id=tg_id)
+        user = await session.scalar(select(User).filter_by(tg_id=tg_id))
         if user is not None:
+            # need this, because chat_id added, when users already exists
+            user.chat_id = chat_id
             logging.info(f"User already exists {tg_id} @{user.username} {user.name}")
+            await session.commit()
+            await session.refresh(user)
             return user
 
-        new_user = User(tg_id=tg_id, username=username)
+        new_user = User(tg_id=tg_id, chat_id=chat_id)
         if username is not None:
             new_user.username = username
+        if name is not None:
+            new_user.name = name
+        if trusted is not None:
+            new_user.trusted = trusted
         session.add(new_user)
         await session.commit()
         logging.info(f"User created {tg_id} @{username}")
@@ -59,7 +71,7 @@ async def create_user(
 
 
 @connection
-async def get_all_users(session: AsyncSession):
+async def get_all_users(session: AsyncSession) -> list[User]:
     """Получает всех пользователей из бд
 
     Args:
@@ -76,56 +88,210 @@ async def get_all_users(session: AsyncSession):
 
 
 @connection
+async def get_all_trusted_users(session: AsyncSession) -> list[User]:
+    """Получает доверенных пользователей из бд
+
+    Args:
+        session (AsyncSession): Объект сессии
+
+    Returns:
+        Sequence[User]: Последовательность из доверенных пользователей
+    """
+    try:
+        users = (await session.scalars(select(User).filter_by(trusted=True))).all()
+        return users
+    except Exception as e:
+        logging.error(e)
+
+
+def _apply_user_updates(
+    user: User,
+    username: str | None = None,
+    name: str | None = None,
+    has_desire: bool | None = None,
+    trusted: bool | None = None,
+) -> None:
+    """Применяет обновления к объекту пользователя
+
+    Args:
+        user (User): Объект пользователя для обновления
+        username (str | None, optional): Username аккаунта (@example). Defaults to None.
+        name (str | None, optional): Имя, указанное пользователем в самом боте. Defaults to None.
+        has_desire (bool | None, optional): Хочет ли пользователь участвовать в очереди. Defaults to None.
+        trusted (bool | None, optional): Является ли пользователь доверенным. Defaults to None.
+    """
+    if username is not None:
+        user.username = username
+
+    if name is not None:
+        old_name = user.name
+        logging.info(
+            f"User renamed id={user.id} tg_id={user.tg_id} @{user.username} {old_name} -> {name}"
+        )
+        user.name = name
+
+    if has_desire is not None:
+        user.has_desire = has_desire
+
+    if trusted is not None:
+        user.trusted = trusted
+        logging.info(
+            f"User trust has changed id={user.id} tg_id={user.tg_id} @{user.username}"
+        )
+
+
+@connection
 async def update_user(
     session: AsyncSession,
     tg_id: int,
-    username: str = None,
-    name: int = None,
-    has_desire: bool = None,
-    trusted: bool = None,
+    username: str | None = None,
+    name: str | None = None,
+    has_desire: bool | None = None,
+    trusted: bool | None = None,
 ) -> User | None:
-    """Обновляет пользователя, если найден
+    """Обновляет пользователя по tg_id, если найден
     - Все поля необязательны, кроме tg_id
 
     Args:
         session (AsyncSession): Объект сессии
         tg_id (int): Id, привязанный к телеграмм аккаунту
-        username (str, optional): Username аккаунта (@example). Defaults to None.
-        name (int, optional): Имя, указанное пользователем в самом боте. Defaults to None.
-        has_desire (bool, optional): Хочет ли пользователь участвовать в очереди. Defaults to None.
-        trusted (bool, optional):Является ли пользователем доверенным. Defaults to None.
+        username (str | None, optional): Username аккаунта (@example). Defaults to None.
+        name (str | None, optional): Имя, указанное пользователем в самом боте. Defaults to None.
+        has_desire (bool | None, optional): Хочет ли пользователь участвовать в очереди. Defaults to None.
+        trusted (bool | None, optional): Является ли пользователь доверенным. Defaults to None.
 
     Returns:
-        User: Обновленный пользователь
+        User | None: Обновленный пользователь или None, если не найден
     """
     try:
         user = await session.scalar(select(User).filter_by(tg_id=tg_id))
 
         if user is None:
-            logging.error(f"User not founded {tg_id} @{username}")
+            logging.error(f"User not found tg_id={tg_id} @{username}")
             return None
 
-        if username is not None:
-            user.username = username
-
-        if name is not None:
-            old_name = user.name
-            logging.info(f"User renamed {tg_id} @{user.username} {old_name} -> {name}")
-            user.name = name
-
-        if has_desire is not None:
-            user.has_desire = has_desire
-
-        if trusted is not None:
-            user.trusted = trusted
-            logging.info(f"User trust has changed {tg_id} @{user.username}")
+        _apply_user_updates(
+            user, username=username, name=name, has_desire=has_desire, trusted=trusted
+        )
 
         await session.commit()
+        await session.refresh(user)
         return user
 
     except Exception as e:
         logging.error(e)
+        return None
 
 
-# TODO: get_desire_status
-# TODO: update user by row_id for admin panel
+@connection
+async def update_user_by_id(
+    session: AsyncSession,
+    user_id: int,
+    username: str | None = None,
+    name: str | None = None,
+    has_desire: bool | None = None,
+    trusted: bool | None = None,
+) -> User | None:
+    """Обновляет пользователя по внутреннему id, если найден
+    - Все поля необязательны, кроме user_id
+    - Предназначена для использования в админ-панели
+
+    Args:
+        session (AsyncSession): Объект сессии
+        user_id (int): Внутренний id пользователя (row_id, primary key)
+        username (str | None, optional): Username аккаунта (@example). Defaults to None.
+        name (str | None, optional): Имя, указанное пользователем в самом боте. Defaults to None.
+        has_desire (bool | None, optional): Хочет ли пользователь участвовать в очереди. Defaults to None.
+        trusted (bool | None, optional): Является ли пользователь доверенным. Defaults to None.
+
+    Returns:
+        User | None: Обновленный пользователь или None, если не найден
+    """
+    try:
+        user = await session.scalar(select(User).filter_by(id=user_id))
+
+        if user is None:
+            logging.error(f"User not found id={user_id}")
+            return None
+
+        _apply_user_updates(
+            user, username=username, name=name, has_desire=has_desire, trusted=trusted
+        )
+
+        await session.commit()
+        await session.refresh(user)
+        return user
+
+    except Exception as e:
+        logging.error(e)
+        return None
+
+
+class BotSettingsDAO:
+    @staticmethod
+    @connection
+    async def set_bool_setting(
+        session: AsyncSession,
+        name: str,
+        value: bool,
+    ):
+        """Задать значение булевой настройки, создаст ее, если ее не существует
+
+        Args:
+            session (AsyncSession): Объект сессии
+            name (str): Название, ключ настройки
+            value (bool): Значение настройки
+        """
+
+        str_value = "true" if value else "false"
+
+        setting = await session.scalar(select(BotSetting).filter_by(name=name))
+
+        if setting:
+            setting.value = str_value
+            logging.info(f"Настройка обновлена {name} -> {value}")
+        else:
+            setting = BotSetting(name=name, value=str_value)
+            session.add(setting)
+            logging.info(f"Настройка создана {name} -> {value}")
+
+        await session.commit()
+
+    @staticmethod
+    @connection
+    async def get_bool_setting(
+        session: AsyncSession,
+        name: str,
+        default: bool = True,
+    ) -> bool:
+        """Получить значение булевой настройки, создаст ее, если ее не существует
+
+        Args:
+            session (AsyncSession): Объект сессии
+            name (str): Название, ключ настройки
+            default (bool, optional): Значение настройки по умолчанию. Если не найдет настройку,
+            то создаст ее с таким значением и вернет его. Defaults to True.
+
+        Returns:
+            bool: значение настройки
+        """
+        try:
+            setting = await session.scalar(select(BotSetting).filter_by(name=name))
+
+            if not setting:
+                BotSettingsDAO.set_bool_setting(
+                    session=session, name=name, value=default
+                )
+                return default
+
+            match setting.value.lower():
+                case "true":
+                    return True
+                case "false":
+                    return False
+                case _:
+                    raise
+
+        except Exception as e:
+            logging.error(e)
+            return None

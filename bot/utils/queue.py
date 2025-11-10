@@ -1,6 +1,6 @@
 from random import shuffle
 
-from bot.db.dao import get_all_users, get_user
+from bot.db.dao import get_all_trusted_users, get_user
 
 
 class Singleton(type):
@@ -19,6 +19,15 @@ class Queue(metaclass=Singleton):
     """Состоит из tg_id пользователей
     """
 
+    async def create_queue(self):
+        """Создает очередь из пользователей из бд"""
+        users = await get_all_trusted_users()
+        self._queue = [user.tg_id for user in users]
+
+    def shuffle(self):
+        """Размешивает очередь в случайном порядке"""
+        shuffle(self._queue)
+
     def get_queue(self) -> list[int]:
         """Возвращает очередь
 
@@ -27,33 +36,25 @@ class Queue(metaclass=Singleton):
         """
         return self._queue
 
-    def shuffle(self):
-        """Размешивает очередь в случайном порядке"""
-        shuffle(self._queue)
-
-    def _next(self):
-        """Отправляет пользователя из начала в конец очереди, то есть переходит к следующему"""
+    def _rotate(self):
+        """Перемещает первого пользователя в конец очереди (циклический сдвиг)"""
         self._queue = self._queue[1:] + [self._queue[0]]
 
-    async def next(self):
-        """Пролистывает список до следуюшего желающего пользователя, пропуская тех кто не желает"""
-        # Бексонечный цикл, если никто не хочет
+    async def next_desiring(self):
+        """Переходит к следуюшему желающему пользователю (has_desire=True), пропуская тех кто не желает"""
         if not self._queue:
             return
-        self._next()
-        print("goooooo")
+        self._rotate()
+
+        first_user_id = self._queue[0]
         user = await get_user(self._queue[0])
         while not user.has_desire:
-            self._next()
+            # Защита от бесконечного цикла
+            if self._queue[0] == first_user_id:
+                break
+            self._rotate()
             user = await get_user(self._queue[0])
-            print("goooooo")
 
-    async def create_queue(self):
-        """Создает очередь из пользователей из бд"""
-        users = await get_all_users()
-        self._queue = [user.tg_id for user in users]
-
-    # TODO: (has_desire_only: bool = False)
     async def build_queue_text(self) -> str:
         """Возвращает список из пользователей в очереди
 
@@ -69,7 +70,8 @@ class Queue(metaclass=Singleton):
 
         result = "✨ Текущая очередь ✨\n"
         for index, user in enumerate(users):
+            username = f"@{user.username}" if user.username is not None else ""
             status = "🟢 хочет" if user.has_desire else "🔴 не хочет"
-            result += f"{index + 1}. {user.name} {status} @{user.username}\n"
+            result += f"{index + 1}. {user.name} {status} {username}\n"
 
         return result

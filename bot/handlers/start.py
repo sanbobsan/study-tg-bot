@@ -3,7 +3,7 @@ from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
-from bot.db.dao import create_user
+from bot.db.dao import BotSettingsDAO, create_user
 from bot.keyboards import keyboards as kb
 
 router = Router()
@@ -12,9 +12,14 @@ router = Router()
 @router.message(CommandStart())
 async def cmd_start(message: Message, state: FSMContext):
     await state.clear()
+
+    trusted = await BotSettingsDAO.get_bool_setting("trust_new")
     user = await create_user(
         tg_id=message.from_user.id,
+        chat_id=message.chat.id,
         username=message.from_user.username,
+        name=message.from_user.full_name,
+        trusted=trusted,
     )
 
     if user is None or user.name is None:

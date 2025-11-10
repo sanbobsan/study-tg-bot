@@ -14,7 +14,6 @@ class Register(StatesGroup):
     entering_name = State()
 
 
-# TODO: Профиль вместо простой регистрации
 @router.message(F.text.lower() == "указать имя")
 @router.message(Command("register", "name"))
 async def register(message: Message, state: FSMContext):

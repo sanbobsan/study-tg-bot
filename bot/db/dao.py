@@ -219,6 +219,3 @@ async def update_user_by_id(
         logging.error(e)
         return None
 
-
-# TODO: get_desire_status
-# TODO: new DAO get_all_trusted_user_ids

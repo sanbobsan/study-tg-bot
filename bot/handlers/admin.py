@@ -14,7 +14,6 @@ router = Router()
 queue = Queue()
 
 
-# TODO: свой полноценный фильтр для админ панели
 @router.message(Command("admin", "adm"), F.from_user.id.in_(config.ADMINS))
 async def admin_panel(message: Message):
     """Отправляет админ панелью с доступными командами"""
@@ -118,7 +117,6 @@ async def adm_show(message: Message):
     )
 
 
-# TODO: /send с возможностью писать от имени бота определенным пользователям
 @router.message(Command("send_queue"), F.from_user.id.in_(config.ADMINS))
 async def adm_send_queue(message: Message):
     """Отправляет доверенным пользователям актуальную очередь"""
@@ -130,8 +128,10 @@ async def adm_send_queue(message: Message):
     )
 
 
-# TODO: DO /trust_new доверять ли новым пользователям
-# TODO: /trust и /untrust имеет очень схожую природу, объединить
+# TODO: /trust_new доверять ли новым пользователям
+# TODO: /rename <id> <new_name>
+
+
 @router.message(Command("trust", "true"), F.from_user.id.in_(config.ADMINS))
 async def adm_trust(message: Message, command: CommandObject):
     """Делает пользователя доверенным по его id"""
@@ -223,6 +223,3 @@ async def adm_untrust(message: Message, command: CommandObject):
 
 
 # endregion
-
-# TODO: DO /rename <id> <new_name>
-# TODO: /change_desire <id> <desire: bool>

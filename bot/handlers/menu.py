@@ -10,7 +10,6 @@ router = Router()
 queue = Queue()
 
 
-# TODO: /next чтобы самому можно было нажимать
 @router.message(F.text.lower().in_(["меню", "menu"]))
 @router.message(Command("menu"))
 async def menu(message: Message):

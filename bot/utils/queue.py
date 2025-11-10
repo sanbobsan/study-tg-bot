@@ -21,7 +21,6 @@ class Queue(metaclass=Singleton):
 
     async def create_queue(self):
         """Создает очередь из пользователей из бд"""
-        # TODO: new DAO get_all_trusted_user_ids
         users = await get_all_trusted_users()
         self._queue = [user.tg_id for user in users]
 
@@ -48,7 +47,6 @@ class Queue(metaclass=Singleton):
         self._rotate()
 
         first_user_id = self._queue[0]
-        # TODO: new DAO get_desire_status
         user = await get_user(self._queue[0])
         while not user.has_desire:
             # Защита от бесконечного цикла
@@ -57,8 +55,6 @@ class Queue(metaclass=Singleton):
             self._rotate()
             user = await get_user(self._queue[0])
 
-    # TODO: добавить параметр (has_desire_only: bool = False)
-    # для создания отчета с только желающими пользователями
     async def build_queue_text(self) -> str:
         """Возвращает список из пользователей в очереди
 

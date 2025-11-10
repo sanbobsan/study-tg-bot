@@ -3,11 +3,11 @@ from aiogram.filters import Command
 from aiogram.filters.command import CommandObject
 from aiogram.types import Message
 
-from bot.db.dao import get_all_users, update_user_by_id
+from bot.db.dao import BotSettingsDAO, get_all_users, update_user_by_id
 from bot.db.models import User
 from bot.keyboards import admin as kb
-from bot.utils.queue import Queue
 from bot.utils.broadcaster import send_queue
+from bot.utils.queue import Queue
 from config import config
 
 router = Router()
@@ -23,12 +23,15 @@ async def admin_panel(message: Message):
         "Управление очередью:\n"
         " • /create, /cr — создать очередь\n"
         " • /shuffle, /shf — перемешать очередь\n"
-        " • /next — перейти к следующему\n"
+        " • /next — перейти к следующему\n\n"
         "Управление пользователями:\n"
         " • /show, /sh — показать всех пользователей\n"
-        " • /send_queue — отправить доверенным пользователям актуальную очередь\n\n"
+        " • /send_queue — отправить доверенным пользователям актуальную очередь\n"
+        " • /rename <id> <new_name> — переименовывает пользователя\n"
         " • /trust, /true <id> — сделать пользователя доверенным\n"
-        " • /untrust <id> — не доверять полльзователю (он не будет участвовать в очереди)\n"
+        " • /untrust <id> — не доверять пользователю (он не будет участвовать в очереди)\n\n"
+        "Управление ботом:\n"
+        " • /trust_new <bool> — изменяет настройку бота - доверять ли новым пользователям (обычно = 1, true)\n"
     )
 
     await message.answer(
@@ -128,8 +131,92 @@ async def adm_send_queue(message: Message):
     )
 
 
-# TODO: /trust_new доверять ли новым пользователям
-# TODO: /rename <id> <new_name>
+@router.message(Command("rename"), F.from_user.id.in_(config.ADMINS))
+async def adm_rename(message: Message, command: CommandObject):
+    """Переименовывает пользователя"""
+
+    command_args = command.args.split() if command.args else []
+
+    if not command_args or len(command_args) < 2:
+        text = (
+            "❌ Ошибка: не указан id или new_name пользователя ⚙️\n\n"
+            "Использование: /rename <id> <new_name> (/show, чтобы получить id)\n"
+            "Например: /rename 1 Иванов Иван"
+        )
+        await message.answer(
+            text=text,
+            reply_markup=kb.admin.as_markup(resize_keyboard=True),
+            parse_mode=None,
+        )
+        return
+
+    try:
+        id, new_name = int(command_args[0]), " ".join(command_args[1:])
+    except ValueError:
+        text = (
+            "❌ Ошибка: id указан неверно ⚙️\n\n"
+            "Использование: /rename <id> <new_name> (/show, чтобы получить id)\n"
+            "Например: /rename 1 Иванов Иван"
+        )
+        await message.answer(
+            text=text,
+            reply_markup=kb.admin.as_markup(resize_keyboard=True),
+            parse_mode=None,
+        )
+        return
+
+    user = await update_user_by_id(user_id=id, name=new_name)
+
+    text = f'👤 Результат ⚙️\nПользователь id={id} @{user.username} теперь "{new_name}"'
+    await message.answer(
+        text=text,
+        reply_markup=kb.admin.as_markup(resize_keyboard=True),
+    )
+
+
+@router.message(Command("trust_new"), F.from_user.id.in_(config.ADMINS))
+async def adm_trust_new(message: Message, command: CommandObject):
+    """Изменяет настройку бота - доверять ли новым пользователям"""
+
+    command_args = command.args
+
+    if not command_args:
+        text = (
+            "❌ Ошибка: не указан аргумент ⚙️\n\n"
+            "Использование: /trust_new <bool> (1, 0) or (true, false)\n"
+            "Например: /trust_new 1, /trust_new false"
+        )
+        await message.answer(
+            text=text,
+            reply_markup=kb.admin.as_markup(resize_keyboard=True),
+            parse_mode=None,
+        )
+        return
+
+    if command_args.lower() in ["1", "true"]:
+        arg = True
+    elif command_args.lower() in ["0", "false"]:
+        arg = False
+    else:
+        text = (
+            "❌ Ошибка: указан неверный аргумент ⚙️\n\n"
+            "Использование: /trust_new <bool> (1, 0 или true, false)\n"
+            "Например, /trust_new 1, /trust_new false"
+        )
+        await message.answer(
+            text=text,
+            reply_markup=kb.admin.as_markup(resize_keyboard=True),
+            parse_mode=None,
+        )
+        return
+
+    await BotSettingsDAO.set_bool_setting("trust_new", arg)
+
+    text = f"🔒 Теперь бот {'не ' if not arg else ''}доверяет всем новым пользователям ⚙️\n\n"
+    await message.answer(
+        text=text,
+        reply_markup=kb.admin.as_markup(resize_keyboard=True),
+    )
 
 
 @router.message(Command("trust", "true"), F.from_user.id.in_(config.ADMINS))
@@ -165,7 +252,7 @@ async def adm_trust(message: Message, command: CommandObject):
                     f" @{updated_user.username}" if updated_user.username else ""
                 )
                 results.append(
-                    f"✅ Доверяем ользователю id={user_id}{name_info}{username_info}"
+                    f"✅ Доверяем пользователю id={user_id}{name_info}{username_info}"
                 )
         except ValueError:
             results.append(f'❌ "{arg}" не является числом')

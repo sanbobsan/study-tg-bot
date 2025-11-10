@@ -3,7 +3,7 @@ import logging
 from sqlalchemy import select
 
 from .database import AsyncSession, connection
-from .models import User
+from .models import BotSetting, User
 
 
 @connection
@@ -31,6 +31,7 @@ async def create_user(
     chat_id: int,
     username: str | None = None,
     name: str | None = None,
+    trusted: bool | None = None,
 ) -> User | None:
     """Создает, добавляет пользователя в бд, если такого нет.
     Возвращает пользователя, если найден или None, если создан
@@ -55,6 +56,8 @@ async def create_user(
             new_user.username = username
         if name is not None:
             new_user.name = name
+        if trusted is not None:
+            new_user.trusted = trusted
         session.add(new_user)
         await session.commit()
         logging.info(f"User created {tg_id} @{username}")
@@ -219,3 +222,72 @@ async def update_user_by_id(
         logging.error(e)
         return None
 
+
+class BotSettingsDAO:
+    @staticmethod
+    @connection
+    async def set_bool_setting(
+        session: AsyncSession,
+        name: str,
+        value: bool,
+    ):
+        """Задать значение булевой настройки, создаст ее, если ее не существует
+
+        Args:
+            session (AsyncSession): Объект сессии
+            name (str): Название, ключ настройки
+            value (bool): Значение настройки
+        """
+
+        str_value = "true" if value else "false"
+
+        setting = await session.scalar(select(BotSetting).filter_by(name=name))
+
+        if setting:
+            setting.value = str_value
+            logging.info(f"Настройка обновлена {name} -> {value}")
+        else:
+            setting = BotSetting(name=name, value=str_value)
+            session.add(setting)
+            logging.info(f"Настройка создана {name} -> {value}")
+
+        await session.commit()
+
+    @staticmethod
+    @connection
+    async def get_bool_setting(
+        session: AsyncSession,
+        name: str,
+        default: bool = True,
+    ) -> bool:
+        """Получить значение булевой настройки, создаст ее, если ее не существует
+
+        Args:
+            session (AsyncSession): Объект сессии
+            name (str): Название, ключ настройки
+            default (bool, optional): Значение настройки по умолчанию. Если не найдет настройку,
+            то создаст ее с таким значением и вернет его. Defaults to True.
+
+        Returns:
+            bool: значение настройки
+        """
+        try:
+            setting = await session.scalar(select(BotSetting).filter_by(name=name))
+
+            if not setting:
+                BotSettingsDAO.set_bool_setting(
+                    session=session, name=name, value=default
+                )
+                return default
+
+            match setting.value.lower():
+                case "true":
+                    return True
+                case "false":
+                    return False
+                case _:
+                    raise
+
+        except Exception as e:
+            logging.error(e)
+            return None

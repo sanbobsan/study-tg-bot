@@ -29,6 +29,7 @@ async def admin_panel(message: Message):
         " • /show, /sh — показать всех пользователей\n"
         " • /send_queue — отправить доверенным пользователям актуальную очередь\n"
         " • /rename <id> <new_name> — переименовывает пользователя\n"
+        " • /have <id> <bool> — меняет желание пользователя на указанное\n"
         " • /trust, /true <id> — сделать пользователя доверенным\n"
         " • /untrust <id> — не доверять пользователю (он не будет участвовать в очереди)\n\n"
         "Управление ботом:\n"
@@ -175,17 +176,17 @@ async def adm_rename(message: Message, command: CommandObject):
     )
 
 
-@router.message(Command("trust_new"))
-async def adm_trust_new(message: Message, command: CommandObject):
-    """Изменяет настройку бота - доверять ли новым пользователям"""
+@router.message(Command("have"))
+async def adm_have(message: Message, command: CommandObject):
+    """Меняет желание пользователя на указанное"""
 
-    command_args = command.args
+    command_args = command.args.split() if command.args else []
 
-    if not command_args:
+    if not command_args or len(command_args) < 2:
         text = (
-            "❌ Ошибка: не указан аргумент ⚙️\n\n"
-            "Использование: /trust_new <bool> (1, 0) or (true, false)\n"
-            "Например: /trust_new 1, /trust_new false"
+            "❌ Ошибка: не указан id или желание пользователя ⚙️\n\n"
+            "Использование: /have <id> <bool> (1, 0 или true, false)\n"
+            "Например: /have 1 true, /have 2 1"
         )
         await message.answer(
             text=text,
@@ -194,15 +195,30 @@ async def adm_trust_new(message: Message, command: CommandObject):
         )
         return
 
-    if command_args.lower() in ["1", "true"]:
-        arg = True
-    elif command_args.lower() in ["0", "false"]:
-        arg = False
+    try:
+        id, arg = int(command_args[0]), command_args[1]
+    except ValueError:
+        text = (
+            "❌ Ошибка: id указан неверно ⚙️\n\n"
+            "Использование: /have <id> <bool> (/show, чтобы получить id)\n"
+            "Например: /have 1 true, /have 2 1"
+        )
+        await message.answer(
+            text=text,
+            reply_markup=kb.admin.as_markup(resize_keyboard=True),
+            parse_mode=None,
+        )
+        return
+
+    if arg.lower() in ["1", "true"]:
+        new_desire = True
+    elif arg.lower() in ["0", "false"]:
+        new_desire = False
     else:
         text = (
             "❌ Ошибка: указан неверный аргумент ⚙️\n\n"
-            "Использование: /trust_new <bool> (1, 0 или true, false)\n"
-            "Например, /trust_new 1, /trust_new false"
+            "Использование: /have <id> <bool> (1, 0 или true, false)\n"
+            "Например: /have 1 true, /have 2 1"
         )
         await message.answer(
             text=text,
@@ -211,9 +227,9 @@ async def adm_trust_new(message: Message, command: CommandObject):
         )
         return
 
-    await BotSettingsDAO.set_bool_setting("trust_new", arg)
+    user = await update_user_by_id(user_id=id, has_desire=new_desire)
 
-    text = f"🔒 Теперь бот {'не ' if not arg else ''}доверяет всем новым пользователям ⚙️\n\n"
+    text = f"👤 Результат ⚙️\nПользователь id={id} @{user.username} теперь {'не ' if not new_desire else ''}желает"
     await message.answer(
         text=text,
         reply_markup=kb.admin.as_markup(resize_keyboard=True),
@@ -304,6 +320,55 @@ async def adm_untrust(message: Message, command: CommandObject):
             results.append(f'❌ "{arg}" не является числом')
 
     text = "🔒 Результат ⚙️\n\n" + "\n".join(results)
+    await message.answer(
+        text=text,
+        reply_markup=kb.admin.as_markup(resize_keyboard=True),
+    )
+
+
+# endregion
+
+
+# region Bot managment
+@router.message(Command("trust_new"))
+async def adm_trust_new(message: Message, command: CommandObject):
+    """Изменяет настройку бота - доверять ли новым пользователям"""
+
+    command_args = command.args
+
+    if not command_args:
+        text = (
+            "❌ Ошибка: не указан аргумент ⚙️\n\n"
+            "Использование: /trust_new <bool> (1, 0) or (true, false)\n"
+            "Например: /trust_new 1, /trust_new false"
+        )
+        await message.answer(
+            text=text,
+            reply_markup=kb.admin.as_markup(resize_keyboard=True),
+            parse_mode=None,
+        )
+        return
+
+    if command_args.lower() in ["1", "true"]:
+        arg = True
+    elif command_args.lower() in ["0", "false"]:
+        arg = False
+    else:
+        text = (
+            "❌ Ошибка: указан неверный аргумент ⚙️\n\n"
+            "Использование: /trust_new <bool> (1, 0 или true, false)\n"
+            "Например, /trust_new 1, /trust_new false"
+        )
+        await message.answer(
+            text=text,
+            reply_markup=kb.admin.as_markup(resize_keyboard=True),
+            parse_mode=None,
+        )
+        return
+
+    await BotSettingsDAO.set_bool_setting("trust_new", arg)
+
+    text = f"🔒 Теперь бот {'не ' if not arg else ''}доверяет всем новым пользователям ⚙️\n\n"
     await message.answer(
         text=text,
         reply_markup=kb.admin.as_markup(resize_keyboard=True),

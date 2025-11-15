@@ -1,20 +1,21 @@
-from aiogram import F, Router
+from aiogram import Router
 from aiogram.filters import Command
 from aiogram.filters.command import CommandObject
 from aiogram.types import Message
 
 from bot.db.dao import BotSettingsDAO, get_all_users, update_user_by_id
 from bot.db.models import User
+from bot.filters.filter import IsAdmin
 from bot.keyboards import admin as kb
 from bot.utils.broadcaster import send_queue
 from bot.utils.queue import Queue
-from config import config
 
 router = Router()
+router.message.filter(IsAdmin())
 queue = Queue()
 
 
-@router.message(Command("admin", "adm"), F.from_user.id.in_(config.ADMINS))
+@router.message(Command("admin", "adm"))
 async def admin_panel(message: Message):
     """Отправляет админ панелью с доступными командами"""
     text = (
@@ -42,7 +43,7 @@ async def admin_panel(message: Message):
 
 
 # region Queue managment
-@router.message(Command("create", "cr"), F.from_user.id.in_(config.ADMINS))
+@router.message(Command("create", "cr"))
 async def adm_create(message: Message):
     """Создает очередь из существующих пользователей, отправляет отчет"""
     await queue.create_queue()
@@ -53,7 +54,7 @@ async def adm_create(message: Message):
     )
 
 
-@router.message(Command("shuffle", "shf"), F.from_user.id.in_(config.ADMINS))
+@router.message(Command("shuffle", "shf"))
 async def adm_shuffle(message: Message):
     """Перемешивает существующую очередь, отправляет отчет"""
     queue.shuffle()
@@ -64,7 +65,7 @@ async def adm_shuffle(message: Message):
     )
 
 
-@router.message(Command("next"), F.from_user.id.in_(config.ADMINS))
+@router.message(Command("next"))
 async def adm_next(message: Message):
     """Прокручивает очередь до следующего, отправляет отчет"""
     await queue.next_desiring()
@@ -81,7 +82,7 @@ async def adm_next(message: Message):
 
 
 # region Users managment
-@router.message(Command("show", "list", "sh", "ls"), F.from_user.id.in_(config.ADMINS))
+@router.message(Command("show", "list", "sh", "ls"))
 async def adm_show(message: Message):
     """Отправляет список всех пользователей бота с их параметрами"""
     users = await get_all_users()
@@ -120,7 +121,7 @@ async def adm_show(message: Message):
     )
 
 
-@router.message(Command("send_queue"), F.from_user.id.in_(config.ADMINS))
+@router.message(Command("send_queue"))
 async def adm_send_queue(message: Message):
     """Отправляет доверенным пользователям актуальную очередь"""
     await send_queue()
@@ -131,7 +132,7 @@ async def adm_send_queue(message: Message):
     )
 
 
-@router.message(Command("rename"), F.from_user.id.in_(config.ADMINS))
+@router.message(Command("rename"))
 async def adm_rename(message: Message, command: CommandObject):
     """Переименовывает пользователя"""
 
@@ -174,7 +175,7 @@ async def adm_rename(message: Message, command: CommandObject):
     )
 
 
-@router.message(Command("trust_new"), F.from_user.id.in_(config.ADMINS))
+@router.message(Command("trust_new"))
 async def adm_trust_new(message: Message, command: CommandObject):
     """Изменяет настройку бота - доверять ли новым пользователям"""
 
@@ -219,7 +220,7 @@ async def adm_trust_new(message: Message, command: CommandObject):
     )
 
 
-@router.message(Command("trust", "true"), F.from_user.id.in_(config.ADMINS))
+@router.message(Command("trust", "true"))
 async def adm_trust(message: Message, command: CommandObject):
     """Делает пользователя доверенным по его id"""
 
@@ -264,7 +265,7 @@ async def adm_trust(message: Message, command: CommandObject):
     )
 
 
-@router.message(Command("untrust"), F.from_user.id.in_(config.ADMINS))
+@router.message(Command("untrust"))
 async def adm_untrust(message: Message, command: CommandObject):
     """Делает пользователя недоверенным по его id"""
 

@@ -2,11 +2,22 @@ from aiogram import F, Router
 from aiogram.filters import Command
 from aiogram.types import Message
 
-from bot.db.dao import update_user
+from bot.db.dao import update_user, get_user
 from bot.keyboards import keyboards as kb
 from bot.utils.queue import Queue
 
+
+async def trust_middleware(handler, event: Message, data):
+    """Middleware, который фильтрует не доверенных пользователей"""
+    user = await get_user(tg_id=event.from_user.id)
+    if not user.trusted:
+        await event.answer("Отказано в доступе, обратись к администратору")
+        return
+    return await handler(event, data)
+
+
 router = Router()
+router.message.middleware(trust_middleware)
 queue = Queue()
 
 

@@ -44,9 +44,9 @@ class Queue(metaclass=Singleton):
         """Переходит к следуюшему желающему пользователю (has_desire=True), пропуская тех кто не желает"""
         if not self._queue:
             return
+        first_user_id = self._queue[0]
         self._rotate()
 
-        first_user_id = self._queue[0]
         user = await get_user(self._queue[0])
         while not user.has_desire:
             # Защита от бесконечного цикла

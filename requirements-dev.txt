@@ -55,6 +55,8 @@ idna==3.11
     # via
     #   -r requirements.txt
     #   yarl
+librt==0.6.3
+    # via mypy
 magic-filter==1.0.12
     # via
     #   -r requirements.txt
@@ -64,8 +66,14 @@ multidict==6.7.0
     #   -r requirements.txt
     #   aiohttp
     #   yarl
+mypy==1.19.0
+    # via -r requirements-dev.in
+mypy-extensions==1.1.0
+    # via mypy
 packaging==25.0
     # via build
+pathspec==0.12.1
+    # via mypy
 pip-tools==7.5.2
     # via -r requirements-dev.in
 propcache==0.4.1
@@ -94,6 +102,7 @@ typing-extensions==4.15.0
     #   -r requirements.txt
     #   aiogram
     #   aiosqlite
+    #   mypy
     #   pydantic
     #   pydantic-core
     #   sqlalchemy

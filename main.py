@@ -6,15 +6,12 @@ from bot.create_bot import bot, dp
 from bot.db.dao import BotSettingsDAO
 from bot.db.database import create_tables
 from bot.handlers import admin, menu, register, start
-from bot.utils.queue import Queue
 
 
 async def start_bot():
     await create_tables()
     await BotSettingsDAO.get_bool_setting(name="trust_new", default=True)
-    queue = Queue()
-    await queue.create_queue()
-    queue.shuffle()
+    # TODO: bot startup load queues
 
 
 async def main():

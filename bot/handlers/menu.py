@@ -4,7 +4,7 @@ from aiogram.types import Message
 
 from bot.db.dao import update_user, get_user
 from bot.keyboards import keyboards as kb
-from bot.utils.queue import Queue
+from bot.utils.queue import QueueManager
 
 
 async def trust_middleware(handler, event: Message, data):
@@ -18,13 +18,13 @@ async def trust_middleware(handler, event: Message, data):
 
 router = Router()
 router.message.middleware(trust_middleware)
-queue = Queue()
+queue_manager = QueueManager()
 
 
 @router.message(F.text.lower().in_(["меню", "menu"]))
 @router.message(Command("menu"))
 async def menu(message: Message):
-    text = await queue.build_queue_text()
+    text = await queue_manager.queue_show()
     await message.answer(
         text=text, reply_markup=kb.menu.as_markup(resize_keyboard=True)
     )
@@ -34,7 +34,7 @@ async def menu(message: Message):
 @router.message(Command("yes", "y"))
 async def yes(message: Message):
     await update_user(tg_id=message.from_user.id, has_desire=True)
-    text = "🟢 Ты добавлен в очередь!\n\n" + await queue.build_queue_text()
+    text = "🟢 Ты добавлен в очередь!\n\n" + await queue_manager.queue_show()
     await message.answer(
         text=text,
         reply_markup=kb.menu.as_markup(resize_keyboard=True),
@@ -45,7 +45,7 @@ async def yes(message: Message):
 @router.message(Command("no", "n"))
 async def no(message: Message):
     await update_user(tg_id=message.from_user.id, has_desire=False)
-    text = "🔴 Ты удалён из очереди!\n\n" + await queue.build_queue_text()
+    text = "🔴 Ты удалён из очереди!\n\n" + await queue_manager.queue_show()
     await message.answer(
         text=text,
         reply_markup=kb.menu.as_markup(resize_keyboard=True),

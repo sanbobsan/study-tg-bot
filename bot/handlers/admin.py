@@ -1,4 +1,4 @@
-from aiogram import Router
+from aiogram import F, Router
 from aiogram.filters import Command
 from aiogram.filters.command import CommandObject
 from aiogram.types import Message
@@ -8,82 +8,136 @@ from bot.db.models import User
 from bot.filters.filter import IsAdmin
 from bot.keyboards import admin as kb
 from bot.utils.broadcaster import send_queue
-from bot.utils.queue import Queue
+from bot.utils.queue import QueueManager
+
+queue_manager = QueueManager()
 
 router = Router()
 router.message.filter(IsAdmin())
-queue = Queue()
 
 
-@router.message(Command("admin", "adm"))
+@router.message(F.text, Command("admin", "adm"))
 async def admin_panel(message: Message):
-    """Отправляет админ панелью с доступными командами"""
+    """Панель администратора c доступными командами"""
+    current = queue_manager.get_current_queue_name()
     text = (
         "⚙️ Панель администратора ⚙️\n"
+        f"{current}\n"
         "Доступные команды:\n\n"
-        "Управление очередью:\n"
-        " • /create, /cr — создать очередь\n"
-        " • /shuffle, /shf — перемешать очередь\n"
-        " • /next — перейти к следующему\n\n"
+        "Управление очередями:\n"
+        " • /create — создать очередь\n"
+        " • /copy — копировать очередь\n"
+        " • /delete — удалить очередь\n"
+        " • /list, /ls — вывести список очередей\n"
+        " • /current, /cur — изменить текущую очередь\n\n"
+        "Управление определенной очередью:\n"
+        " • /show, /sh — показать текущую очередь\n"
+        " • /shuffle — перемешать очередь\n"
+        " • /next, /nx  — перейти к следующему\n"
+        " • /init — инициализировать очередь из бд\n"
+        " • /update — обновить кешированный текст\n\n\n"
         "Управление пользователями:\n"
-        " • /show, /sh — показать всех пользователей\n"
+        " • /users — показать всех пользователей\n"
         " • /send_queue — отправить доверенным пользователям актуальную очередь\n"
         " • /rename <id> <new_name> — переименовывает пользователя\n"
         " • /have <id> <bool> — меняет желание пользователя на указанное\n"
-        " • /trust, /true <id> — сделать пользователя доверенным\n"
+        " • /trust <id> — сделать пользователя доверенным\n"
         " • /untrust <id> — не доверять пользователю (он не будет участвовать в очереди)\n\n"
         "Управление ботом:\n"
         " • /trust_new <bool> — изменяет настройку бота - доверять ли новым пользователям (обычно = 1, true)\n"
     )
-
-    await message.answer(
-        text=text,
-        reply_markup=kb.admin.as_markup(resize_keyboard=True),
-        parse_mode=None,
-    )
+    await message.answer(text=text)
 
 
-# region Queue managment
-@router.message(Command("create", "cr"))
-async def adm_create(message: Message):
-    """Создает очередь из существующих пользователей, отправляет отчет"""
-    await queue.create_queue()
-    text = "↩️ Очередь успешно создана! ⚙️\n\n" + str(await queue.build_queue_text())
-    await message.answer(
-        text=text,
-        reply_markup=kb.admin.as_markup(resize_keyboard=True),
-    )
+# region Queues managment
+@router.message(F.text, Command("create"))
+async def create_queue(message: Message, command: CommandObject):
+    """Создать очередь"""
+    queue_name = command.args
+    text = await queue_manager.create_queue(queue_name)
+    await message.answer(text=text)
 
 
-@router.message(Command("shuffle", "shf"))
-async def adm_shuffle(message: Message):
-    """Перемешивает существующую очередь, отправляет отчет"""
-    queue.shuffle()
-    text = "🔀 Очередь перемешана! ⚙️\n\n" + str(await queue.build_queue_text())
-    await message.answer(
-        text=text,
-        reply_markup=kb.admin.as_markup(resize_keyboard=True),
-    )
+@router.message(F.text, Command("copy"))
+async def copy_queue(message: Message, command: CommandObject):
+    """Копировать очередь"""
+    queue_name = command.args
+    text = await queue_manager.copy_queue(queue_name)
+    await message.answer(text=text)
 
 
-@router.message(Command("next"))
-async def adm_next(message: Message):
-    """Прокручивает очередь до следующего, отправляет отчет"""
-    await queue.next_desiring()
-    text = "➡️ Переход к следующему выполнен! ⚙️\n\n" + str(
-        await queue.build_queue_text()
-    )
-    await message.answer(
-        text=text,
-        reply_markup=kb.admin.as_markup(resize_keyboard=True),
-    )
+@router.message(F.text, Command("delete"))
+async def delete_queue(message: Message, command: CommandObject):
+    """Удалить очередь"""
+    queue_name = command.args
+    text = queue_manager.delete_queue(queue_name=queue_name)
+    await message.answer(text=text)
+
+
+@router.message(F.text, Command("list", "ls"))
+async def list_queues(message: Message):
+    """Посмотреть все очереди"""
+    text = queue_manager.get_queue_names()
+    await message.answer(text)
+
+
+@router.message(F.text, Command("current", "cur"))
+async def set_current_queue(message: Message, command: CommandObject):
+    """Установить текущую очередь"""
+    queue_name = command.args
+    text = await queue_manager.set_current_queue(queue_name=queue_name)
+    await message.answer(text=text)
 
 
 # endregion
 
 
-# region Users managment
-@router.message(Command("show", "list", "sh", "ls"))
+# region Queue managment
+@router.message(F.text, Command("show", "sh"))
+async def queue_show(message: Message, command: CommandObject):
+    """Возвращает текстовое представление очереди"""
+    queue_name = command.args
+    text = await queue_manager.queue_show(queue_name)
+    await message.answer(text)
+
+
+@router.message(F.text, Command("shuffle", "shf"))
+async def queue_shuffle(message: Message, command: CommandObject):
+    """Перемешивает очередь"""
+    queue_name = command.args
+    text = await queue_manager.queue_shuffle(queue_name)
+    await message.answer(text)
+
+
+@router.message(F.text, Command("next", "nx"))
+async def queue_next_desiring(message: Message, command: CommandObject):
+    """Переходит к следующему желающему в очереди"""
+    queue_name = command.args
+    text = await queue_manager.queue_next_desiring(queue_name)
+    await message.answer(text)
+
+
+@router.message(F.text, Command("init"))
+async def queue_init(message: Message, command: CommandObject):
+    """Инициализирует определенную очередь пользователями из бд"""
+    queue_name = command.args
+    text = await queue_manager.queue_init(queue_name)
+    await message.answer(text)
+
+
+@router.message(F.text, Command("update"))
+async def queue_update(message: Message, command: CommandObject):
+    """Обновляет кешированный текст у определенной очереди"""
+    queue_name = command.args
+    text = await queue_manager.queue_update_cached_text(queue_name)
+    await message.answer(text)
+
+
+# endregion
+
+
+# region Users manage trash
+@router.message(Command("users"))
 async def adm_show(message: Message):
     """Отправляет список всех пользователей бота с их параметрами"""
     users = await get_all_users()
@@ -236,7 +290,7 @@ async def adm_have(message: Message, command: CommandObject):
     )
 
 
-@router.message(Command("trust", "true"))
+@router.message(Command("trust"))
 async def adm_trust(message: Message, command: CommandObject):
     """Делает пользователя доверенным по его id"""
 

@@ -1,14 +1,9 @@
 import json
 import logging
-from typing import Protocol
 
 import aiofiles
 
 QUEUES_FILE_PATH = "data/queues.json"
-
-
-class Queue(Protocol):
-    _queue: list[int]
 
 
 async def load_queues() -> dict[str, list[int]]:

@@ -1,10 +1,11 @@
+from typing import Protocol
+
 from aiogram import F, Router
 from aiogram.filters import Command
 from aiogram.filters.command import CommandObject
 from aiogram.types import Message
 
 from bot.db.dao import BotSettingsDAO, get_all_users, update_user_by_id
-from bot.db.models import User
 from bot.filters.filter import IsAdmin
 from bot.keyboards import admin as kb
 from bot.utils.broadcaster import send_queue
@@ -141,6 +142,16 @@ async def queue_update(message: Message, command: CommandObject):
     queue_name = command.args
     text = await queue_manager.queue_update_cached_text(queue_name)
     await message.answer(text)
+
+
+class User(Protocol):
+    """Структурная типизация (утиная типизация)"""
+
+    id: int
+    name: str | None
+    username: str | None
+    has_desire: bool
+    trusted: bool
 
 
 # region Users manage trash

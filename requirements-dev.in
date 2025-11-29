@@ -1,1 +1,4 @@
 pip-tools
+pip<25.3
+mypy
+-r requirements.txt

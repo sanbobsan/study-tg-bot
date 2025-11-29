@@ -2,3 +2,4 @@ aiogram
 sqlalchemy
 python-decouple
 aiosqlite
+aiofiles

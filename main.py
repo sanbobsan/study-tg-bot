@@ -6,18 +6,18 @@ from bot.create_bot import bot, dp
 from bot.db.dao import BotSettingsDAO
 from bot.db.database import create_tables
 from bot.handlers import admin, menu, register, start
-from bot.utils.queue import Queue
+from bot.utils.queue import QueueManager
+
+queue_manager = QueueManager()
 
 
-async def start_bot():
+async def start_bot() -> None:
     await create_tables()
     await BotSettingsDAO.get_bool_setting(name="trust_new", default=True)
-    queue = Queue()
-    await queue.create_queue()
-    queue.shuffle()
+    await queue_manager.load_from_file()
 
 
-async def main():
+async def main() -> None:
     try:
         dp.include_routers(start.router, register.router, menu.router)
         dp.include_router(admin.router)
@@ -31,6 +31,7 @@ async def main():
 
     finally:
         await bot.session.close()
+        await queue_manager.save_to_file()
 
 
 if __name__ == "__main__":

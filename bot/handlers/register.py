@@ -6,8 +6,10 @@ from aiogram.types import Message
 
 from bot.db.dao import update_user
 from bot.keyboards import keyboards as kb
+from bot.utils.queue import QueueManager
 
 router = Router()
+queue_manager = QueueManager()
 
 
 class Register(StatesGroup):
@@ -39,6 +41,7 @@ async def enter_name(message: Message, state: FSMContext):
         username=message.from_user.username,
         name=message.text,
     )
+    await queue_manager.queue_update_cached_text()
     await state.clear()
 
     text = "✨ Отлично! Твоё имя сохранено\n\nИспользуй кнопку ниже или /menu, чтобы перейти в меню"

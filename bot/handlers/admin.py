@@ -32,7 +32,7 @@ async def admin_panel(message: Message):
         " • /current, /cur — изменить текущую очередь\n\n"
         "Управление определенной очередью:\n"
         " • /show, /sh — показать текущую очередь\n"
-        " • /shuffle — перемешать очередь\n"
+        " • /shuffle, /shf — перемешать очередь\n"
         " • /next, /nx  — перейти к следующему\n"
         " • /init — инициализировать очередь из бд\n"
         " • /update — обновить кешированный текст\n\n\n"
@@ -125,15 +125,22 @@ async def queue_init(message: Message, command: CommandObject):
     await message.answer(text)
 
 
+@router.message(F.text, Command("save"))
+async def save_queue(message: Message):
+    """Сохраняет очереди в json файл"""
+    await queue_manager.save_to_file()
+    await message.answer("⚙️ Очереди сохранены")
+
+
+# endregion
+
+
 @router.message(F.text, Command("update"))
 async def queue_update(message: Message, command: CommandObject):
     """Обновляет кешированный текст у определенной очереди"""
     queue_name = command.args
     text = await queue_manager.queue_update_cached_text(queue_name)
     await message.answer(text)
-
-
-# endregion
 
 
 # region Users manage trash
@@ -222,6 +229,7 @@ async def adm_rename(message: Message, command: CommandObject):
         return
 
     user = await update_user_by_id(user_id=id, name=new_name)
+    await queue_manager.queue_update_cached_text()
 
     text = f'👤 Результат ⚙️\nПользователь id={id} @{user.username} теперь "{new_name}"'
     await message.answer(
@@ -282,6 +290,7 @@ async def adm_have(message: Message, command: CommandObject):
         return
 
     user = await update_user_by_id(user_id=id, has_desire=new_desire)
+    await queue_manager.queue_update_cached_text()
 
     text = f"👤 Результат ⚙️\nПользователь id={id} @{user.username} теперь {'не ' if not new_desire else ''}желает"
     await message.answer(
@@ -314,6 +323,7 @@ async def adm_trust(message: Message, command: CommandObject):
         try:
             user_id = int(arg)
             updated_user = await update_user_by_id(user_id=user_id, trusted=True)
+            await queue_manager.queue_update_cached_text()
 
             if updated_user is None:
                 results.append(f"❌ Пользователь с id={user_id} не найден")
@@ -359,6 +369,7 @@ async def adm_untrust(message: Message, command: CommandObject):
         try:
             user_id = int(arg)
             updated_user = await update_user_by_id(user_id=user_id, trusted=False)
+            await queue_manager.queue_update_cached_text()
 
             if updated_user is None:
                 results.append(f"❌ Пользователь с id={user_id} не найден")

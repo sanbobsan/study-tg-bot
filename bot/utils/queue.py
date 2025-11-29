@@ -3,11 +3,13 @@ from random import shuffle
 from bot.db.dao import get_all_trusted_users, get_user
 from dataclasses import dataclass
 
+from bot.utils.json_storage import load_queues, save_queues
+
 
 class Queue:
     """Класс, который представляет одну очередь"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Инициализирует новый объект очереди"""
         self._queue: list[int] = []
         """Состоит из tg_id пользователей"""
@@ -21,12 +23,12 @@ class Queue:
         """
         return self._queue.copy()
 
-    async def set_queue(self, queue: list[int], queue_name: str) -> None:
+    async def set_queue(self, tg_ids: list[int], queue_name: str) -> None:
         """Сеттер для очереди
         Args:
-            queue (list[int]): Очередь, состоит из tg_id пользователей
+            tg_ids (list[int]): Очередь, состоит из tg_id пользователей
         """
-        self._queue = queue
+        self._queue = tg_ids
         await self.update_cached_text(queue_name=queue_name)
 
     async def init_from_db(self, queue_name: str) -> None:
@@ -151,7 +153,7 @@ class QueueManager(metaclass=Singleton):
             return "❌ Очередь не найдена"
 
     # region Queues
-    async def create_queue(self, queue_name: str) -> str:
+    async def create_queue(self, queue_name: str | None) -> str:
         """Создает новую очередь из пользователей из бд и переключает текущую"""
         if queue_name is None:
             return "❌ Введи название очереди"
@@ -169,7 +171,7 @@ class QueueManager(metaclass=Singleton):
             add_at_start="⚙️ Очередь создана",
         )
 
-    async def copy_queue(self, queue_name: str) -> str:
+    async def copy_queue(self, queue_name: str | None) -> str:
         """Создает копию текущей очереди и переключает текущую на нее"""
         if queue_name is None:
             return "❌ Введи название очереди"
@@ -181,9 +183,7 @@ class QueueManager(metaclass=Singleton):
             return "❌ Текущая очередь не установлена"
 
         queue = Queue()
-        await queue.set_queue(
-            queue=current_context.queue.get_queue(), queue_name=queue_name
-        )
+        await queue.set_queue(current_context.queue.get_queue(), queue_name=queue_name)
         self._queues[queue_name] = queue
         self._current_queue_name = queue_name
 
@@ -288,5 +288,17 @@ class QueueManager(metaclass=Singleton):
 
     # endregion
 
-    def bot_startup(self) -> None:
-        pass
+    async def load_from_file(self) -> None:
+        """Подгружает очереди из файла"""
+        queues_dict: dict[str, list[int]] = await load_queues()
+        for queue_name, tg_ids in queues_dict.items():
+            queue = Queue()
+            await queue.set_queue(tg_ids, queue_name=queue_name)
+            self._queues[queue_name] = queue
+
+    async def save_to_file(self) -> None:
+        """Сохраняет очереди в файл"""
+        data_for_save: dict[str, list[int]] = {}
+        for queue_name, queue in self._queues.items():
+            data_for_save[queue_name] = queue.get_queue()
+        await save_queues(data=data_for_save)

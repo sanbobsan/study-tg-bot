@@ -5,7 +5,9 @@
 #    pip-compile --allow-unsafe '.\requirements-dev.in'
 #
 aiofiles==24.1.0
-    # via aiogram
+    # via
+    #   -r requirements.txt
+    #   aiogram
 aiogram==3.22.0
     # via -r requirements.txt
 aiohappyeyeballs==2.6.1

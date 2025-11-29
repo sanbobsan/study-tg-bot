@@ -34,6 +34,7 @@ async def menu(message: Message):
 @router.message(Command("yes", "y"))
 async def yes(message: Message):
     await update_user(tg_id=message.from_user.id, has_desire=True)
+    await queue_manager.queue_update_cached_text()
     text = "🟢 Ты добавлен в очередь!\n\n" + await queue_manager.queue_show()
     await message.answer(
         text=text,
@@ -45,6 +46,7 @@ async def yes(message: Message):
 @router.message(Command("no", "n"))
 async def no(message: Message):
     await update_user(tg_id=message.from_user.id, has_desire=False)
+    await queue_manager.queue_update_cached_text()
     text = "🔴 Ты удалён из очереди!\n\n" + await queue_manager.queue_show()
     await message.answer(
         text=text,

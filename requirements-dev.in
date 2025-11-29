@@ -1,1 +1,3 @@
 pip-tools
+pip<25.3
+-r requirements.txt

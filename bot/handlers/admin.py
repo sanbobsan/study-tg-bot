@@ -30,7 +30,8 @@ async def admin_panel(message: Message):
         " • /copy — копировать очередь\n"
         " • /delete — удалить очередь\n"
         " • /list, /ls — вывести список очередей\n"
-        " • /current, /cur — изменить текущую очередь\n\n"
+        " • /current, /cur — изменить текущую очередь\n"
+        " • /save — сохранить очереди в файл\n\n"
         "Управление определенной очередью:\n"
         " • /show, /sh — показать текущую очередь\n"
         " • /shuffle, /shf — перемешать очередь\n"
@@ -126,6 +127,14 @@ async def queue_init(message: Message, command: CommandObject):
     await message.answer(text)
 
 
+@router.message(F.text, Command("update"))
+async def queue_update(message: Message, command: CommandObject):
+    """Обновляет кешированный текст у определенной очереди"""
+    queue_name = command.args
+    text = await queue_manager.queue_update_cached_text(queue_name)
+    await message.answer(text)
+
+
 @router.message(F.text, Command("save"))
 async def save_queue(message: Message):
     """Сохраняет очереди в json файл"""
@@ -134,14 +143,6 @@ async def save_queue(message: Message):
 
 
 # endregion
-
-
-@router.message(F.text, Command("update"))
-async def queue_update(message: Message, command: CommandObject):
-    """Обновляет кешированный текст у определенной очереди"""
-    queue_name = command.args
-    text = await queue_manager.queue_update_cached_text(queue_name)
-    await message.answer(text)
 
 
 class User(Protocol):

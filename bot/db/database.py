@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import (
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
+# абсолютный путь
 engine = create_async_engine(url="sqlite+aiosqlite:////data/db.sqlite3")
 async_session = async_sessionmaker(engine, class_=AsyncSession)
 

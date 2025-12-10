@@ -1,3 +1,6 @@
+from functools import wraps
+from typing import Awaitable, Callable, Concatenate, ParamSpec, TypeVar
+
 from sqlalchemy import Integer
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import (
@@ -18,7 +21,14 @@ class Base(AsyncAttrs, DeclarativeBase):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
 
 
-def connection(func):
+P = ParamSpec("P")
+R = TypeVar("R")
+
+
+def connection(
+    func: Callable[Concatenate["AsyncSession", P], Awaitable[R]],
+) -> Callable[P, Awaitable[R]]:
+    @wraps(func)
     async def wrapper(*args, **kwargs):
         async with async_session() as session:
             try:

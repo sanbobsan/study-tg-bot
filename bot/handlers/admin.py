@@ -5,10 +5,11 @@ from aiogram.filters import Command
 from aiogram.filters.command import CommandObject
 from aiogram.types import Message
 
-from bot.db.dao import BotSettingsDAO, get_all_users, update_user_by_id
+from bot.db.dao import get_all_users, update_user_by_id
 from bot.filters.filter import IsAdmin
 from bot.keyboards import admin as kb
 from bot.utils.broadcaster import send_queue
+from bot.utils.json_storage import save_bot_settings
 from bot.utils.queue import QueueManager
 
 queue_manager = QueueManager()
@@ -443,7 +444,7 @@ async def adm_trust_new(message: Message, command: CommandObject):
         )
         return
 
-    await BotSettingsDAO.set_bool_setting("trust_new", arg)
+    await save_bot_settings({"trust_new": arg})
 
     text = f"🔒 Теперь бот {'не ' if not arg else ''}доверяет всем новым пользователям ⚙️\n\n"
     await message.answer(

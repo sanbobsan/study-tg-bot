@@ -3,7 +3,6 @@ import logging
 from asyncio.exceptions import CancelledError
 
 from bot.create_bot import bot, dp
-from bot.db.dao import BotSettingsDAO
 from bot.db.database import create_tables
 from bot.handlers import admin, menu, register, start
 from bot.utils.queue import QueueManager
@@ -13,7 +12,6 @@ queue_manager = QueueManager()
 
 async def start_bot() -> None:
     await create_tables()
-    await BotSettingsDAO.get_bool_setting(name="trust_new", default=True)
     await queue_manager.load_from_file()
 
 

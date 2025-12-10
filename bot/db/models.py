@@ -25,15 +25,3 @@ class User(Base):
 
     def __repr__(self) -> str:
         return f"<User(id={self.id}, tg_id={self.tg_id}, username='{self.username}', name='{self.name}', has_desire='{self.has_desire}', trusted='{self.trusted}')>"
-
-
-class BotSetting(Base):
-    __tablename__ = "bot_settings"
-
-    name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
-    """Название, ключ настройки"""
-    value: Mapped[str] = mapped_column(String, nullable=False)
-    """Значение настройки"""
-
-    def __repr__(self) -> str:
-        return f"BotSetting(name='{self.name}', value='{self.value}')"

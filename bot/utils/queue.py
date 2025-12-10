@@ -1,8 +1,8 @@
+import logging
+from dataclasses import dataclass
 from random import shuffle
 
 from bot.db.dao import get_all_trusted_users, get_user
-from dataclasses import dataclass
-
 from bot.utils.json_storage import load_queues, save_queues
 
 
@@ -73,9 +73,11 @@ class Queue:
         users = [await get_user(tg_id) for tg_id in self._queue]
         if not users:
             return f"✨ Очередь {queue_name} пуста ✨"
-
         result = f"✨ Очередь {queue_name} ✨\n"
         for index, user in enumerate(users):
+            if user is None:
+                logging.error("User in queue, but not in db")
+                continue
             username = f"@{user.username}" if user.username is not None else ""
             status = "🟢 хочет" if user.has_desire else "🔴 не хочет"
             result += f"{index + 1}. {user.name} {status} {username}\n"
@@ -83,7 +85,7 @@ class Queue:
 
 
 class Singleton(type):
-    _instances = {}
+    _instances: dict = {}
 
     def __call__(cls, *args, **kwargs):
         if cls not in cls._instances:

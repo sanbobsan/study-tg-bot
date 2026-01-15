@@ -2,6 +2,8 @@
 *__pycache__
 
 .env
+!.env.example
+
 .venv
 
 *.sqlite3

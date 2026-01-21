@@ -104,6 +104,13 @@ async def save_queue(message: Message) -> None:
     await message.answer("⚙️ Очереди сохранены")
 
 
+@router.message(F.text, Command("load"))
+async def load_queue(message: Message) -> None:
+    """Загружает очереди из json файла"""
+    await queue_manager.load_from_file()
+    await message.answer("⚙️ Очереди загружены")
+
+
 # endregion
 
 

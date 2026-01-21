@@ -9,10 +9,13 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
 )
+from sqlalchemy.ext.asyncio.engine import AsyncEngine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
-engine = create_async_engine(url="sqlite+aiosqlite:///data/db.sqlite3")
-async_session = async_sessionmaker(engine, class_=AsyncSession)
+engine: AsyncEngine = create_async_engine(url="sqlite+aiosqlite:///data/db.sqlite3")
+async_session: async_sessionmaker[AsyncSession] = async_sessionmaker(
+    engine, class_=AsyncSession
+)
 
 
 class Base(AsyncAttrs, DeclarativeBase):
@@ -29,7 +32,7 @@ def connection(
     func: Callable[Concatenate["AsyncSession", P], Awaitable[R]],
 ) -> Callable[P, Awaitable[R]]:
     @wraps(func)
-    async def wrapper(*args, **kwargs):
+    async def wrapper(*args, **kwargs) -> R:
         async with async_session() as session:
             try:
                 return await func(session, *args, **kwargs)

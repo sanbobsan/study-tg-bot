@@ -1,5 +1,4 @@
 pip-tools
-pip<25.3
 mypy
 types-aiofiles
 -r requirements.txt

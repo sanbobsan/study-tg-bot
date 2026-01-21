@@ -43,6 +43,13 @@ class Queue:
         shuffle(self._queue)
         await self.update_cached_text(queue_name=queue_name)
 
+    def move(self, steps: int = 1) -> None:
+        """Циклический сдвиг очереди вперед или назад на заданное количество шагов"""
+        if not self._queue:
+            return
+        steps = steps % len(self._queue)
+        self._queue = self._queue[steps:] + self._queue[:steps]
+
     async def next_desiring(self, queue_name: str) -> None:
         """Переходит к следующему желающему пользователю (has_desire=True), пропуская тех кто не желает.
         Использует циклический сдвиг (первый в очереди становится последним)
@@ -50,10 +57,11 @@ class Queue:
         if not self._queue:
             return
         for _ in range(len(self._queue)):
-            self._queue = self._queue[1:] + [self._queue[0]]
+            self.move(steps=1)
             user: User | None = await get_user(self._queue[0])
             if user is not None and user.has_desire:
                 await self.update_cached_text(queue_name=queue_name)
+                return
 
     def get_text(self) -> str:
         """Возвращает подготовленный текст для сообщения из кеша"""
@@ -286,6 +294,18 @@ class QueueManager(metaclass=Singleton):
             queue=cxt.queue,
             is_current=cxt.is_current,
             add_at_start="⚙️ Кешированный текст обновлен",
+        )
+
+    async def queue_move(self, queue_name: str | None = None, steps: int = 1) -> str:
+        """Циклический сдвиг очереди вперед или назад на заданное количество шагов"""
+        cxt: GetQueueContext = self._get_queue_context(queue_name)
+        if cxt.queue and cxt.queue_name:
+            cxt.queue.move(steps)
+            await cxt.queue.update_cached_text(cxt.queue_name)
+        return self._build_queue_report(
+            queue=cxt.queue,
+            is_current=cxt.is_current,
+            add_at_start=f"⚙️ Очередь сдвинута вперед на {steps} шаг(ов)",
         )
 
     # endregion

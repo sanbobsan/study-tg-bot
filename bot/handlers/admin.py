@@ -38,6 +38,8 @@ async def admin_panel(message: Message) -> None:
         " • /show, /sh — показать текущую очередь\n"
         " • /shuffle, /shf — перемешать очередь\n"
         " • /next, /nx  — перейти к следующему\n"
+        " • /forward, /fwd <steps> — сдвинуть очередь вперед на заданное количество шагов (по умолчанию = 1)\n"
+        " • /backward, /bwd <steps> — сдвинуть очередь назад на заданное количество шагов (по умолчанию = 1)\n"
         " • /init — инициализировать очередь из бд\n"
         " • /update — обновить кешированный текст\n\n\n"
         "Управление пользователями:\n"
@@ -95,6 +97,13 @@ async def set_current_queue(message: Message, command: CommandObject) -> None:
     await message.answer(text=text)
 
 
+@router.message(F.text, Command("save"))
+async def save_queue(message: Message) -> None:
+    """Сохраняет очереди в json файл"""
+    await queue_manager.save_to_file()
+    await message.answer("⚙️ Очереди сохранены")
+
+
 # endregion
 
 
@@ -123,6 +132,23 @@ async def queue_next_desiring(message: Message, command: CommandObject) -> None:
     await message.answer(text)
 
 
+@router.message(F.text, Command("forward", "fwd", "backward", "bwd"))
+async def queue_move(message: Message, command: CommandObject) -> None:
+    """Циклический сдвиг очереди вперед или назад на заданное количество шагов"""
+    command_args: list[str] = command.args.split() if command.args else []
+    try:
+        steps: int = int(command_args[0]) if command_args else 1
+    except ValueError:
+        await message.answer("❌ Ошибка: количество шагов указано неверно")
+        return
+    queue_name: str | None = command_args[1] if len(command_args) > 1 else None
+    if command.command in ["backward", "bwd"]:
+        steps = -steps
+
+    text: str = await queue_manager.queue_move(queue_name=queue_name, steps=steps)
+    await message.answer(text=text)
+
+
 @router.message(F.text, Command("init"))
 async def queue_init(message: Message, command: CommandObject) -> None:
     """Инициализирует определенную очередь пользователями из бд"""
@@ -137,13 +163,6 @@ async def queue_update(message: Message, command: CommandObject) -> None:
     queue_name: str | None = command.args
     text: str = await queue_manager.queue_update_cached_text(queue_name)
     await message.answer(text)
-
-
-@router.message(F.text, Command("save"))
-async def save_queue(message: Message) -> None:
-    """Сохраняет очереди в json файл"""
-    await queue_manager.save_to_file()
-    await message.answer("⚙️ Очереди сохранены")
 
 
 # endregion
@@ -240,7 +259,7 @@ async def rename(message: Message, command: CommandObject) -> None:
 
 
 @router.message(Command("have"))
-async def adm_have(message: Message, command: CommandObject) -> None:
+async def have(message: Message, command: CommandObject) -> None:
     """Меняет желание пользователя на указанное"""
 
     command_args: list[str] = command.args.split() if command.args else []
@@ -269,7 +288,7 @@ async def adm_have(message: Message, command: CommandObject) -> None:
 
 
 @router.message(Command("trust", "untrust"))
-async def adm_trust(message: Message, command: CommandObject) -> None:
+async def trust(message: Message, command: CommandObject) -> None:
     """Делает пользователя доверенным по его id"""
 
     command_args: list[str] = command.args.split() if command.args else []

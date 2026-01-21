@@ -1,8 +1,9 @@
+import logging
+from dataclasses import dataclass
 from random import shuffle
 
 from bot.db.dao import get_all_trusted_users, get_user
-from dataclasses import dataclass
-
+from bot.db.models import User
 from bot.utils.json_storage import load_queues, save_queues
 
 
@@ -42,6 +43,13 @@ class Queue:
         shuffle(self._queue)
         await self.update_cached_text(queue_name=queue_name)
 
+    def move(self, steps: int = 1) -> None:
+        """Циклический сдвиг очереди вперед или назад на заданное количество шагов"""
+        if not self._queue:
+            return
+        steps = steps % len(self._queue)
+        self._queue = self._queue[steps:] + self._queue[:steps]
+
     async def next_desiring(self, queue_name: str) -> None:
         """Переходит к следующему желающему пользователю (has_desire=True), пропуская тех кто не желает.
         Использует циклический сдвиг (первый в очереди становится последним)
@@ -49,9 +57,9 @@ class Queue:
         if not self._queue:
             return
         for _ in range(len(self._queue)):
-            self._queue = self._queue[1:] + [self._queue[0]]
-            user = await get_user(self._queue[0])
-            if user.has_desire:
+            self.move(steps=1)
+            user: User | None = await get_user(self._queue[0])
+            if user is not None and user.has_desire:
                 await self.update_cached_text(queue_name=queue_name)
                 return
 
@@ -70,20 +78,22 @@ class Queue:
             1. Иван @username хочет
             2. Максим @username не хочет
         """
-        users = [await get_user(tg_id) for tg_id in self._queue]
+        users: list[User | None] = [await get_user(tg_id) for tg_id in self._queue]
         if not users:
             return f"✨ Очередь {queue_name} пуста ✨"
-
-        result = f"✨ Очередь {queue_name} ✨\n"
+        result: str = f"✨ Очередь {queue_name} ✨\n"
         for index, user in enumerate(users):
-            username = f"@{user.username}" if user.username is not None else ""
-            status = "🟢 хочет" if user.has_desire else "🔴 не хочет"
+            if user is None:
+                logging.error("User in queue, but not in db")
+                continue
+            username: str = f"@{user.username}" if user.username is not None else ""
+            status: str = "🟢 хочет" if user.has_desire else "🔴 не хочет"
             result += f"{index + 1}. {user.name} {status} {username}\n"
         return result
 
 
 class Singleton(type):
-    _instances = {}
+    _instances: dict = {}
 
     def __call__(cls, *args, **kwargs):
         if cls not in cls._instances:
@@ -117,7 +127,7 @@ class QueueManager(metaclass=Singleton):
 
         if not queue_name or queue_name == self._current_queue_name:
             return GetQueueContext(
-                queue=self._queues.get(self._current_queue_name),
+                queue=self._queues.get(self._current_queue_name),  # type: ignore
                 queue_name=self._current_queue_name,
                 is_current=True,
             )
@@ -196,7 +206,7 @@ class QueueManager(metaclass=Singleton):
     def delete_queue(self, queue_name: str | None = None) -> str:
         """Удаляет очередь"""
         context = self._get_queue_context(queue_name=queue_name)
-        if not context.queue:
+        if not context.queue or not context.queue_name:
             return "❌ Очередь не найдена"
         if context.is_current:
             self._current_queue_name = None
@@ -217,10 +227,10 @@ class QueueManager(metaclass=Singleton):
             return "Текущая очередь не установлена"
         return f"Текущая очередь: ✨ {text} ✨"
 
-    async def set_current_queue(self, queue_name: str) -> str:
+    async def set_current_queue(self, queue_name: str | None) -> str:
         """Устанавливает очередь текущей по ее названию"""
         cxt = self._get_queue_context(queue_name=queue_name)
-        if not cxt.queue:
+        if not cxt.queue or queue_name is None:
             return "❌ Такой очереди нет"
         if cxt.is_current:
             return "❌ Эта очередь уже является текущей"
@@ -245,7 +255,7 @@ class QueueManager(metaclass=Singleton):
     async def queue_shuffle(self, queue_name: str | None = None) -> str:
         """Перемешивает очередь"""
         cxt = self._get_queue_context(queue_name)
-        if cxt.queue:
+        if cxt.queue and cxt.queue_name:
             await cxt.queue.shuffle(cxt.queue_name)
         return self._build_queue_report(
             queue=cxt.queue,
@@ -256,7 +266,7 @@ class QueueManager(metaclass=Singleton):
     async def queue_next_desiring(self, queue_name: str | None = None) -> str:
         """Переходит к следующему желающему в очереди"""
         cxt = self._get_queue_context(queue_name)
-        if cxt.queue:
+        if cxt.queue and cxt.queue_name:
             await cxt.queue.next_desiring(cxt.queue_name)
         return self._build_queue_report(
             queue=cxt.queue,
@@ -267,7 +277,7 @@ class QueueManager(metaclass=Singleton):
     async def queue_init(self, queue_name: str | None = None) -> str:
         """Инициализирует очередь пользователями из бд"""
         cxt = self._get_queue_context(queue_name)
-        if cxt.queue:
+        if cxt.queue and cxt.queue_name:
             await cxt.queue.init_from_db(cxt.queue_name)
         return self._build_queue_report(
             queue=cxt.queue,
@@ -278,12 +288,24 @@ class QueueManager(metaclass=Singleton):
     async def queue_update_cached_text(self, queue_name: str | None = None) -> str:
         """Обновляет кешированный подготовленный текст для сообщения ТОЛЬКО у одной очереди"""
         cxt = self._get_queue_context(queue_name)
-        if cxt.queue:
+        if cxt.queue and cxt.queue_name:
             await cxt.queue.update_cached_text(cxt.queue_name)
         return self._build_queue_report(
             queue=cxt.queue,
             is_current=cxt.is_current,
             add_at_start="⚙️ Кешированный текст обновлен",
+        )
+
+    async def queue_move(self, queue_name: str | None = None, steps: int = 1) -> str:
+        """Циклический сдвиг очереди вперед или назад на заданное количество шагов"""
+        cxt: GetQueueContext = self._get_queue_context(queue_name)
+        if cxt.queue and cxt.queue_name:
+            cxt.queue.move(steps)
+            await cxt.queue.update_cached_text(cxt.queue_name)
+        return self._build_queue_report(
+            queue=cxt.queue,
+            is_current=cxt.is_current,
+            add_at_start=f"⚙️ Очередь сдвинута вперед на {steps} шаг(ов)",
         )
 
     # endregion

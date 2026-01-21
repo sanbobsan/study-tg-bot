@@ -1,3 +1,6 @@
+from functools import wraps
+from typing import Awaitable, Callable, Concatenate, ParamSpec, TypeVar
+
 from sqlalchemy import Integer
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import (
@@ -6,10 +9,13 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
 )
+from sqlalchemy.ext.asyncio.engine import AsyncEngine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
-engine = create_async_engine(url="sqlite+aiosqlite:///data/db.sqlite3")
-async_session = async_sessionmaker(engine, class_=AsyncSession)
+engine: AsyncEngine = create_async_engine(url="sqlite+aiosqlite:///data/db.sqlite3")
+async_session: async_sessionmaker[AsyncSession] = async_sessionmaker(
+    engine, class_=AsyncSession
+)
 
 
 class Base(AsyncAttrs, DeclarativeBase):
@@ -18,8 +24,15 @@ class Base(AsyncAttrs, DeclarativeBase):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
 
 
-def connection(func):
-    async def wrapper(*args, **kwargs):
+P = ParamSpec("P")
+R = TypeVar("R")
+
+
+def connection(
+    func: Callable[Concatenate["AsyncSession", P], Awaitable[R]],
+) -> Callable[P, Awaitable[R]]:
+    @wraps(func)
+    async def wrapper(*args, **kwargs) -> R:
         async with async_session() as session:
             try:
                 return await func(session, *args, **kwargs)

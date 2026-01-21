@@ -9,7 +9,7 @@ from bot.db.dao import get_all_users, update_user_by_id
 from bot.db.models import User
 from bot.filters.filter import IsAdmin
 from bot.keyboards import admin as kb
-from bot.utils.broadcaster import send_queue
+from bot.utils.broadcaster import send, send_queue
 from bot.utils.json_storage import save_bot_settings
 from bot.utils.queue import QueueManager
 
@@ -45,6 +45,7 @@ async def admin_panel(message: Message) -> None:
         "Управление пользователями:\n"
         " • /users — показать всех пользователей\n"
         " • /send_queue — отправить доверенным пользователям актуальную очередь\n"
+        " • /send <message> — отправить сообщение всем доверенным пользователям\n"
         " • /rename <id> <new_name> — переименовывает пользователя\n"
         " • /have <id> <bool> — меняет желание пользователя на указанное\n"
         " • /trust <id> — сделать пользователя доверенным\n"
@@ -176,8 +177,6 @@ async def queue_update(message: Message, command: CommandObject) -> None:
 
 
 # region Users management
-
-
 @router.message(F.text, Command("users"))
 async def users(message: Message) -> None:
     """Отправляет список всех пользователей бота с их параметрами"""
@@ -216,6 +215,25 @@ async def send_queue_cmd(message: Message) -> None:
     """Отправляет доверенным пользователям актуальную очередь"""
     await send_queue()
     text = "💬 Актуальная очередь отправлена доверенным пользователям ⚙️\n\n"
+    await message.answer(text=text)
+
+
+@router.message(F.text, Command("send"))
+async def send_msg(message: Message, command: CommandObject) -> None:
+    """Отправляет сообщение всем доверенным пользователям"""
+    message_text: str | None = command.args
+
+    if not message_text:
+        text = (
+            "❌ Ошибка: не указано сообщение ⚙️\n\n"
+            "Использование: /send <message>\n"
+            "Например: /send Привет, это тестовое сообщение"
+        )
+        await message.answer(text=text)
+        return
+
+    await send(message_text=message_text, trusted_only=True)
+    text = "💬 Сообщение отправлено доверенным пользователям ⚙️\n\n"
     await message.answer(text=text)
 
 

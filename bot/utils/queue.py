@@ -87,7 +87,7 @@ class Queue:
                 logging.error("User in queue, but not in db")
                 continue
             username: str = f"@{user.username}" if user.username is not None else ""
-            status: str = "🟢 хочет" if user.has_desire else "🔴 не хочет"
+            status: str = "🟢" if user.has_desire else "🔴"
             result += f"{index + 1}. {user.name} {status} {username}\n"
         return result
 

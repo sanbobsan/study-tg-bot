@@ -384,25 +384,19 @@ async def adm_trust_new(message: Message, command: CommandObject):
         )
         return
 
-    if command_args.lower() in ["1", "true"]:
-        arg = True
-    elif command_args.lower() in ["0", "false"]:
-        arg = False
-    else:
+    bool_value: None | bool = validate_bool_arg(command_args[0])
+    if bool_value is None:
         text = (
             "❌ Ошибка: указан неверный аргумент ⚙️\n\n"
             "Использование: /trust_new <bool> (1, 0 или true, false)\n"
             "Например, /trust_new 1, /trust_new false"
         )
-        await message.answer(
-            text=text,
-            parse_mode=None,
-        )
+        await message.answer(text=text)
         return
 
-    await save_bot_settings({"trust_new": arg})
+    await save_bot_settings({"trust_new": bool_value})
 
-    text = f"🔒 Теперь бот {'не ' if not arg else ''}доверяет всем новым пользователям ⚙️\n\n"
+    text = f"🔒 Теперь бот {'не ' if not bool_value else ''}доверяет всем новым пользователям ⚙️\n\n"
     await message.answer(
         text=text,
     )

@@ -4,8 +4,8 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import Message
 
-from bot.db.dao import update_user
-from bot.keyboards import keyboards as kb
+from bot import keyboards as kb
+from bot.db import update_user
 from bot.utils.queue import QueueManager
 
 router = Router()
@@ -36,6 +36,8 @@ async def cancel(message: Message, state: FSMContext):
 
 @router.message(Register.entering_name, F.text)
 async def enter_name(message: Message, state: FSMContext):
+    if message.from_user is None:
+        return
     await update_user(
         tg_id=message.from_user.id,
         username=message.from_user.username,

@@ -1,5 +1,7 @@
+from typing import Sequence
+
 from bot.create_bot import bot
-from bot.db.dao import get_all_trusted_users, get_all_users
+from bot.db import User, get_all_trusted_users, get_all_users
 from bot.utils.queue import QueueManager
 
 
@@ -10,7 +12,7 @@ async def send(message_text: str, trusted_only: bool = True) -> None:
         trusted_only (bool, optional): Если true, то сообщение отправится только доверенным пользователям, в ином случае всем
     """
     if trusted_only:
-        users = await get_all_trusted_users()
+        users: Sequence[User] = await get_all_trusted_users()
     else:
         users = await get_all_users()
     for user in users:

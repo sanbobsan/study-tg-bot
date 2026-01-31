@@ -4,8 +4,6 @@
 *.pyc
 
 .env
-!.env.example
-
 .venv
 .mypy_cache
 .git
@@ -13,4 +11,4 @@
 *.sqlite3
 *.json
 
-!.dockerignore
+/data

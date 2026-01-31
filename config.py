@@ -1,9 +1,10 @@
-from decouple import config
+from decouple import config  # type: ignore
 
 
 class Config:
-    TOKEN = config("TOKEN")
-    ADMINS = [int(admin_id) for admin_id in config("ADMINS").split(",")]
+    TOKEN: str = config("TOKEN")
+    ADMINS: list[int] = [int(admin_id) for admin_id in config("ADMINS").split(",")]
+    STORAGE_PATH: str = config("STORAGE_PATH").rstrip("/")
 
 
 config = Config

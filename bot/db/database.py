@@ -12,7 +12,11 @@ from sqlalchemy.ext.asyncio import (
 from sqlalchemy.ext.asyncio.engine import AsyncEngine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
-engine: AsyncEngine = create_async_engine(url="sqlite+aiosqlite:///data/db.sqlite3")
+from config import config
+
+engine: AsyncEngine = create_async_engine(
+    url=f"sqlite+aiosqlite:///{config.STORAGE_PATH}/db.sqlite3"
+)
 async_session: async_sessionmaker[AsyncSession] = async_sessionmaker(
     engine, class_=AsyncSession
 )

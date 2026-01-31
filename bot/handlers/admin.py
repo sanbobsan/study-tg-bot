@@ -5,10 +5,9 @@ from aiogram.filters import Command
 from aiogram.filters.command import CommandObject
 from aiogram.types import Message
 
-from bot.db.dao import get_all_users, update_user_by_id
-from bot.db.models import User
+from bot import keyboards as kb
+from bot.db import User, get_all_users, update_user_by_id
 from bot.filters import IsAdminFilter
-from bot.keyboards import admin as kb
 from bot.utils.broadcaster import send, send_queue
 from bot.utils.json_storage import save_bot_settings
 from bot.utils.queue import QueueManager

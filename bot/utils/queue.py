@@ -2,8 +2,7 @@ import logging
 from dataclasses import dataclass
 from random import shuffle
 
-from bot.db.dao import get_all_trusted_users, get_user
-from bot.db.models import User
+from bot.db import User, get_all_trusted_users, get_user
 from bot.utils.json_storage import load_queues, save_queues
 
 

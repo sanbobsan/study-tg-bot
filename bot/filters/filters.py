@@ -1,12 +1,5 @@
-from typing import Protocol
-
 from aiogram.filters import BaseFilter
 from aiogram.types import Message
-
-
-class User(Protocol):
-    tg_id: int
-    trusted: bool
 
 
 class IsAdminFilter(BaseFilter):

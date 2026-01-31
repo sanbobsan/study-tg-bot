@@ -4,7 +4,7 @@ from typing import Any, Awaitable, Callable
 from aiogram import BaseMiddleware
 from aiogram.types import Message, TelegramObject
 
-from bot.db.models import User
+from bot.db import User
 
 
 class IsTrustedMiddleware(BaseMiddleware):

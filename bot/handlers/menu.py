@@ -2,8 +2,8 @@ from aiogram import F, Router
 from aiogram.filters import Command
 from aiogram.types import Message
 
-from bot.db.dao import get_user, update_user
-from bot.keyboards import keyboards as kb
+from bot import keyboards as kb
+from bot.db import get_user, update_user
 from bot.middlewares import IsTrustedMiddleware
 from bot.utils.queue import QueueManager
 

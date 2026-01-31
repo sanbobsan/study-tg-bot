@@ -3,8 +3,8 @@ import logging
 from asyncio.exceptions import CancelledError
 
 from bot.create_bot import bot, dp
-from bot.db.database import create_tables
-from bot.handlers import admin, menu, register, start
+from bot.db import create_tables
+from bot.handlers import main_router
 from bot.utils.queue import QueueManager
 
 queue_manager = QueueManager()
@@ -17,8 +17,7 @@ async def start_bot() -> None:
 
 async def main() -> None:
     try:
-        dp.include_routers(start.router, register.router, menu.router)
-        dp.include_router(admin.router)
+        dp.include_router(main_router)
         dp.startup.register(start_bot)
 
         await bot.delete_webhook(drop_pending_updates=True)

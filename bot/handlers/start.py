@@ -4,9 +4,8 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 from aiogram.types.reply_keyboard_markup import ReplyKeyboardMarkup
 
-from bot.db.dao import create_user
-from bot.db.models import User
-from bot.keyboards import keyboards as kb
+from bot import keyboards as kb
+from bot.db import User, create_user
 from bot.utils.json_storage import load_bot_settings
 
 router = Router()

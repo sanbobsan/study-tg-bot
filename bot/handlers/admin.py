@@ -40,6 +40,7 @@ async def admin_panel(message: Message) -> None:
         " • /next, /nx  — перейти к следующему\n"
         " • /forward, /fwd <steps> — сдвинуть очередь вперед на заданное количество шагов (по умолчанию = 1)\n"
         " • /backward, /bwd <steps> — сдвинуть очередь назад на заданное количество шагов (по умолчанию = 1)\n"
+        " • /replace <hwo> <where> — переместить пользователя с <hwo> индекса на <where>\n"
         " • /init — инициализировать очередь из бд\n"
         " • /update — обновить кешированный текст\n\n\n"
         "Управление пользователями:\n"
@@ -154,6 +155,22 @@ async def queue_move(message: Message, command: CommandObject) -> None:
         steps = -steps
 
     text: str = await queue_manager.queue_move(queue_name=queue_name, steps=steps)
+    await message.answer(text=text)
+
+
+@router.message(F.text, Command("replace"))
+async def queue_replace(message: Message, command: CommandObject) -> None:
+    """Перемещение конкретного пользователя на другое конкретное место по индексам"""
+    command_args: list[str] = command.args.split() if command.args else []
+    try:
+        hwo: int = int(command_args[0]) - 1
+        where: int = int(command_args[1]) - 1
+        # - 1, потому что в показе очередей индексы начинаются с 1
+    except (ValueError, IndexError):
+        await message.answer("❌ Ошибка: аргументы указаны неверно")
+        return
+
+    text: str = await queue_manager.queue_replace(hwo, where)
     await message.answer(text=text)
 
 

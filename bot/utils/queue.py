@@ -37,6 +37,19 @@ class Queue:
         self._queue = [user.tg_id for user in users]
         await self.update_cached_text(queue_name=queue_name)
 
+    async def replace(self, hwo: int, where: int, queue_name: str):
+        """Переместить пользователя по индексу на место по индексу
+
+        Args:
+            hwo (int): Кого переместить (текущий индекс в очереди)
+            where (int): Куда переместить
+            например 5 – на 5 место
+        """
+        # Использование queue_name в параметрах - ужасно
+
+        self._queue.insert(where, self._queue.pop(hwo))
+        await self.update_cached_text(queue_name)
+
     async def shuffle(self, queue_name: str) -> None:
         """Размешивает очередь в случайном порядке"""
         shuffle(self._queue)
@@ -246,6 +259,19 @@ class QueueManager(metaclass=Singleton):
     # endregion
 
     # region Queue
+    async def queue_replace(self, hwo: int, where: int, queue_name: str | None = None):
+        cxt = self._get_queue_context(queue_name)
+        if cxt.queue and cxt.queue_name:
+            try:
+                await cxt.queue.replace(hwo, where, cxt.queue_name)
+            except IndexError:
+                return "❌ Неправильный индекс"
+        return self._build_queue_report(
+            queue=cxt.queue,
+            is_current=cxt.is_current,
+            add_at_start=f"⚙️ Пользователь перемещен с {hwo + 1} на {where + 1}",
+        )
+
     async def queue_show(self, queue_name: str | None = None) -> str:
         """Возвращает текстовое представление очереди"""
         cxt = self._get_queue_context(queue_name)

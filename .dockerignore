@@ -1,14 +1,23 @@
+
+**/*__pycache__
+**/*.pyc
+
 .*
-
-*__pycache__
-*.pyc
-
-.env
-.venv
 .mypy_cache
-.git
 
+# git
+.git
+.gitignore
+# environment variables 
+.env
+.env.example
+# virtual environment
+.venv
+requirements-dev.txt
+*.in
+# data
+/data
 *.sqlite3
 *.json
-
-/data
+# docker
+Dockerfile

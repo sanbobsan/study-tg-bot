@@ -12,9 +12,9 @@ from sqlalchemy.ext.asyncio import (
 from sqlalchemy.ext.asyncio.engine import AsyncEngine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
-from config import config
+from config import settings
 
-engine: AsyncEngine = create_async_engine(url=config.DB_URL)
+engine: AsyncEngine = create_async_engine(url=settings.db_url)
 async_session: async_sessionmaker[AsyncSession] = async_sessionmaker(
     engine, class_=AsyncSession
 )

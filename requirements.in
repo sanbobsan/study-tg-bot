@@ -1,6 +1,6 @@
 aiogram
 sqlalchemy
-python-decouple
+pydantic-settings
 aiosqlite
 aiofiles
 alembic

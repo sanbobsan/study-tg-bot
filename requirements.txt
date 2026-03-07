@@ -49,11 +49,15 @@ propcache==0.4.1
     #   aiohttp
     #   yarl
 pydantic==2.11.10
-    # via aiogram
+    # via
+    #   aiogram
+    #   pydantic-settings
 pydantic-core==2.33.2
     # via pydantic
-python-decouple==3.8
+pydantic-settings==2.13.1
     # via -r requirements.in
+python-dotenv==1.2.2
+    # via pydantic-settings
 sqlalchemy==2.0.44
     # via
     #   -r requirements.in
@@ -68,6 +72,8 @@ typing-extensions==4.15.0
     #   sqlalchemy
     #   typing-inspection
 typing-inspection==0.4.2
-    # via pydantic
+    # via
+    #   pydantic
+    #   pydantic-settings
 yarl==1.22.0
     # via aiohttp

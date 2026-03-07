@@ -93,16 +93,21 @@ pydantic==2.11.10
     # via
     #   -r requirements.txt
     #   aiogram
+    #   pydantic-settings
 pydantic-core==2.33.2
     # via
     #   -r requirements.txt
     #   pydantic
+pydantic-settings==2.13.1
+    # via -r requirements.txt
 pyproject-hooks==1.2.0
     # via
     #   build
     #   pip-tools
-python-decouple==3.8
-    # via -r requirements.txt
+python-dotenv==1.2.2
+    # via
+    #   -r requirements.txt
+    #   pydantic-settings
 sqlalchemy==2.0.44
     # via
     #   -r requirements.txt
@@ -124,6 +129,7 @@ typing-inspection==0.4.2
     # via
     #   -r requirements.txt
     #   pydantic
+    #   pydantic-settings
 wheel==0.45.1
     # via pip-tools
 yarl==1.22.0

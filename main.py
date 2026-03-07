@@ -7,12 +7,13 @@ from bot.db import create_tables
 from bot.handlers import main_router
 from bot.utils import create_folder
 from bot.utils.queue import QueueManager
+from config import settings
 
 queue_manager = QueueManager()
 
 
 async def start_bot() -> None:
-    create_folder()
+    create_folder(settings.storage_path)
     await create_tables()
     await queue_manager.load_from_file()
 

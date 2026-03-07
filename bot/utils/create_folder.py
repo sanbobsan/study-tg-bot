@@ -1,7 +1,5 @@
 from pathlib import Path
 
-from config import config
 
-
-def create_folder() -> None:
-    Path(config.STORAGE_PATH).mkdir(exist_ok=True)
+def create_folder(path: str) -> None:
+    Path(path).mkdir(exist_ok=True)

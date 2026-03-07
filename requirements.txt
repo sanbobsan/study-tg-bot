@@ -18,6 +18,8 @@ aiosignal==1.4.0
     # via aiohttp
 aiosqlite==0.21.0
     # via -r requirements.in
+alembic==1.18.4
+    # via -r requirements.in
 annotated-types==0.7.0
     # via pydantic
 attrs==25.4.0
@@ -34,6 +36,10 @@ idna==3.11
     # via yarl
 magic-filter==1.0.12
     # via aiogram
+mako==1.3.10
+    # via alembic
+markupsafe==3.0.3
+    # via mako
 multidict==6.7.0
     # via
     #   aiohttp
@@ -49,11 +55,14 @@ pydantic-core==2.33.2
 python-decouple==3.8
     # via -r requirements.in
 sqlalchemy==2.0.44
-    # via -r requirements.in
+    # via
+    #   -r requirements.in
+    #   alembic
 typing-extensions==4.15.0
     # via
     #   aiogram
     #   aiosqlite
+    #   alembic
     #   pydantic
     #   pydantic-core
     #   sqlalchemy

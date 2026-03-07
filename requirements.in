@@ -3,3 +3,4 @@ sqlalchemy
 python-decouple
 aiosqlite
 aiofiles
+alembic

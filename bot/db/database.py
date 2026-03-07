@@ -14,9 +14,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 from config import config
 
-engine: AsyncEngine = create_async_engine(
-    url=f"sqlite+aiosqlite:///{config.STORAGE_PATH}/db.sqlite3"
-)
+engine: AsyncEngine = create_async_engine(url=config.DB_URL)
 async_session: async_sessionmaker[AsyncSession] = async_sessionmaker(
     engine, class_=AsyncSession
 )

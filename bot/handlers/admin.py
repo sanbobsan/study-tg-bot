@@ -10,10 +10,10 @@ from bot.db import User, get_all_users, update_user_by_id
 from bot.filters import IsAdminFilter
 from bot.utils.broadcaster import send, send_queue
 from bot.utils.json_storage import save_bot_settings
-from bot.utils.queue import QueueManager
+from bot.utils.queues import queue_manager
 from config import config
 
-queue_manager = QueueManager()
+
 
 router = Router()
 router.message.filter(IsAdminFilter(admin_ids=config.ADMINS))

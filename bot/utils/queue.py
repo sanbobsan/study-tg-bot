@@ -104,15 +104,6 @@ class Queue:
         return result
 
 
-class Singleton(type):
-    _instances: dict = {}
-
-    def __call__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
-        return cls._instances[cls]
-
-
 @dataclass
 class GetQueueContext:
     queue: Queue | None
@@ -123,14 +114,15 @@ class GetQueueContext:
     """Текущая ли очередь"""
 
 
-class QueueManager(metaclass=Singleton):
+class QueueManager:
     """Менеджер для управления очередями.
     Предназначен для готового использования.
     Внешние методы возвращают готовые строки для сообщений
     """
 
-    _queues: dict[str, Queue] = {}
-    _current_queue_name: str | None = None
+    def __init__(self) -> None:
+        self._queues: dict[str, Queue] = {}
+        self._current_queue_name: str | None = None
 
     def _get_queue_context(self, queue_name: str | None = None) -> GetQueueContext:
         """Возвращает результат поиска, контекст.
@@ -349,3 +341,6 @@ class QueueManager(metaclass=Singleton):
         for queue_name, queue in self._queues.items():
             data_for_save[queue_name] = queue.get_queue()
         await save_queues(data=data_for_save)
+
+# Экземпляр для импорта в других частях проекта
+queue_manager = QueueManager()

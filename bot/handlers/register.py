@@ -6,10 +6,10 @@ from aiogram.types import Message
 
 from bot import keyboards as kb
 from bot.db import update_user
-from bot.utils.queue import QueueManager
+from bot.utils.queues import queue_manager
 
 router = Router()
-queue_manager = QueueManager()
+
 
 
 class Register(StatesGroup):

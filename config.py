@@ -1,10 +1,18 @@
-from decouple import config  # type: ignore
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class Config:
-    TOKEN: str = config("TOKEN")
-    ADMINS: list[int] = [int(admin_id) for admin_id in config("ADMINS").split(",")]
-    STORAGE_PATH: str = config("STORAGE_PATH").rstrip("/")
+class Settings(BaseSettings):
+    token: str = Field()
+    admins: list[int] = Field()
+    storage_path: str = "data"
+
+    @property
+    def db_url(self) -> str:
+        path = self.storage_path.rstrip("/")
+        return f"sqlite+aiosqlite:///{path}/db.sqlite3"
+
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
 
-config = Config
+settings = Settings()  # type: ignore

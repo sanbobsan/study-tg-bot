@@ -11,12 +11,10 @@ from bot.filters import IsAdminFilter
 from bot.utils.broadcaster import send, send_queue
 from bot.utils.json_storage import save_bot_settings
 from bot.utils.queues import queue_manager
-from config import config
-
-
+from config import settings
 
 router = Router()
-router.message.filter(IsAdminFilter(admin_ids=config.ADMINS))
+router.message.filter(IsAdminFilter(admin_ids=settings.admins))
 
 
 @router.message(F.text, Command("admin", "adm"))

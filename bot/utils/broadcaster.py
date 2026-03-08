@@ -2,7 +2,7 @@ from typing import Sequence
 
 from bot.create_bot import bot
 from bot.db import User, get_all_trusted_users, get_all_users
-from bot.utils.queue import QueueManager
+from bot.utils.queues import queue_manager
 
 
 async def send(message_text: str, trusted_only: bool = True) -> None:
@@ -21,5 +21,5 @@ async def send(message_text: str, trusted_only: bool = True) -> None:
 
 async def send_queue() -> None:
     """Отправляет доверенным пользователям актуальную очередь"""
-    queue_manager = QueueManager()
+
     await send(await queue_manager.queue_show())

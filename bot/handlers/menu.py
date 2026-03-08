@@ -5,9 +5,9 @@ from aiogram.types import Message
 from bot import keyboards as kb
 from bot.db import get_user, update_user
 from bot.middlewares import IsTrustedMiddleware
-from bot.utils.queue import QueueManager
+from bot.utils.queues import queue_manager
 
-queue_manager = QueueManager()
+
 
 router = Router()
 router.message.middleware(IsTrustedMiddleware(get_user_func=get_user))

@@ -6,10 +6,8 @@ from bot.create_bot import bot, dp
 from bot.db import create_tables
 from bot.handlers import main_router
 from bot.utils import create_folder
-from bot.utils.queue import QueueManager
+from bot.utils.queues import queue_manager
 from config import settings
-
-queue_manager = QueueManager()
 
 
 async def start_bot() -> None:

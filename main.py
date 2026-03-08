@@ -5,8 +5,7 @@ from asyncio.exceptions import CancelledError
 from bot.create_bot import bot, dp
 from bot.db import create_tables
 from bot.handlers import main_router
-from bot.utils import create_folder
-from bot.utils.queue import queue_manager
+from bot.utils import create_folder, queue_manager
 from config import settings
 
 

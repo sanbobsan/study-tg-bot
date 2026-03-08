@@ -6,7 +6,7 @@ from aiogram.types import Message
 
 from bot import keyboards as kb
 from bot.db import update_user
-from bot.utils.queues import queue_manager
+from bot.utils.queue import queue_manager
 
 router = Router()
 

@@ -5,7 +5,7 @@ from aiogram.types import Message
 from bot import keyboards as kb
 from bot.db import get_user, update_user
 from bot.middlewares import IsTrustedMiddleware
-from bot.utils.queues import queue_manager
+from bot.utils.queue import queue_manager
 
 
 

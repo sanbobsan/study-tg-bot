@@ -55,12 +55,17 @@ class Queue:
         shuffle(self._queue)
         await self.update_cached_text(queue_name=queue_name)
 
-    def move(self, steps: int = 1) -> None:
-        """Циклический сдвиг очереди вперед или назад на заданное количество шагов"""
+    def _move(self, steps: int = 1) -> None:
+        """Циклический сдвиг очереди, без обновления кеша текста"""
         if not self._queue:
             return
         steps = steps % len(self._queue)
         self._queue = self._queue[steps:] + self._queue[:steps]
+
+    async def move(self, queue_name: str, steps: int = 1) -> None:
+        """Циклический сдвиг очереди вперед или назад на заданное количество шагов"""
+        self._move(steps=steps)
+        await self.update_cached_text(queue_name)
 
     async def next_desiring(self, queue_name: str) -> None:
         """Переходит к следующему желающему пользователю (has_desire=True), пропуская тех кто не желает.
@@ -69,7 +74,7 @@ class Queue:
         if not self._queue:
             return
         for _ in range(len(self._queue)):
-            self.move(steps=1)
+            self._move(steps=1)
             user: User | None = await get_user(self._queue[0])
             if user is not None and user.has_desire:
                 await self.update_cached_text(queue_name=queue_name)
@@ -317,8 +322,7 @@ class QueueManager:
         """Циклический сдвиг очереди вперед или назад на заданное количество шагов"""
         cxt: GetQueueContext = self._get_queue_context(queue_name)
         if cxt.queue and cxt.queue_name:
-            cxt.queue.move(steps)
-            await cxt.queue.update_cached_text(cxt.queue_name)
+            await cxt.queue.move(cxt.queue_name, steps)
         return self._build_queue_report(
             queue=cxt.queue,
             is_current=cxt.is_current,
@@ -341,6 +345,7 @@ class QueueManager:
         for queue_name, queue in self._queues.items():
             data_for_save[queue_name] = queue.get_queue()
         await save_queues(data=data_for_save)
+
 
 # Экземпляр для импорта в других частях проекта
 queue_manager = QueueManager()

@@ -16,7 +16,7 @@ async def send(message_text: str, trusted_only: bool = True) -> None:
     else:
         users = await get_all_users()
     for user in users:
-        await bot.send_message(user.chat_id, text=message_text)
+        await bot.send_message(user.tg_id, text=message_text)
 
 
 async def send_queue() -> None:

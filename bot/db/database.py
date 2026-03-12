@@ -28,7 +28,6 @@ async def get_user(session: AsyncSession, tg_id: int) -> User | None:
 async def create_user(
     session: AsyncSession,
     tg_id: int,
-    chat_id: int,
     username: str | None = None,
     name: str | None = None,
     trusted: bool | None = None,
@@ -46,14 +45,12 @@ async def create_user(
     try:
         user: User | None = await session.scalar(select(User).filter_by(tg_id=tg_id))
         if user is not None:
-            # need this, because chat_id added, when users already exists
-            user.chat_id = chat_id
             logging.info(f"User already exists {tg_id} @{user.username} {user.name}")
             await session.commit()
             await session.refresh(user)
             return user
 
-        new_user = User(tg_id=tg_id, chat_id=chat_id)
+        new_user = User(tg_id=tg_id)
         if username is not None:
             new_user.username = username
         if name is not None:

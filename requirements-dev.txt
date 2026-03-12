@@ -22,14 +22,14 @@ aiosignal==1.4.0
     # via
     #   -r requirements.txt
     #   aiohttp
-aiosqlite==0.21.0
-    # via -r requirements.txt
 alembic==1.18.4
     # via -r requirements.txt
 annotated-types==0.7.0
     # via
     #   -r requirements.txt
     #   pydantic
+asyncpg==0.31.0
+    # via -r requirements.txt
 attrs==25.4.0
     # via
     #   -r requirements.txt
@@ -118,7 +118,6 @@ typing-extensions==4.15.0
     # via
     #   -r requirements.txt
     #   aiogram
-    #   aiosqlite
     #   alembic
     #   mypy
     #   pydantic

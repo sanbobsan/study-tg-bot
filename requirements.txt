@@ -16,12 +16,12 @@ aiohttp==3.12.15
     # via aiogram
 aiosignal==1.4.0
     # via aiohttp
-aiosqlite==0.21.0
-    # via -r requirements.in
 alembic==1.18.4
     # via -r requirements.in
 annotated-types==0.7.0
     # via pydantic
+asyncpg==0.31.0
+    # via -r requirements.in
 attrs==25.4.0
     # via aiohttp
 certifi==2025.10.5
@@ -65,7 +65,6 @@ sqlalchemy==2.0.44
 typing-extensions==4.15.0
     # via
     #   aiogram
-    #   aiosqlite
     #   alembic
     #   pydantic
     #   pydantic-core

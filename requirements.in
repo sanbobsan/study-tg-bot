@@ -1,6 +1,6 @@
 aiogram
 sqlalchemy
 pydantic-settings
-aiosqlite
+asyncpg
 aiofiles
 alembic

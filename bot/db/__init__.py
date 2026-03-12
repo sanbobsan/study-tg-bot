@@ -1,4 +1,4 @@
-from .dao import (
+from .database import (
     create_user,
     get_all_trusted_users,
     get_all_users,
@@ -6,7 +6,7 @@ from .dao import (
     update_user,
     update_user_by_id,
 )
-from .database import create_tables
+from .database_helper import create_tables
 from .models import User
 
 __all__ = [

@@ -1,5 +1,6 @@
 aiogram
 sqlalchemy
-python-decouple
-aiosqlite
+pydantic-settings
+asyncpg
 aiofiles
+alembic

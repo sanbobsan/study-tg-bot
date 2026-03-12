@@ -12,11 +12,9 @@ from sqlalchemy.ext.asyncio import (
 from sqlalchemy.ext.asyncio.engine import AsyncEngine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
-from config import config
+from config import settings
 
-engine: AsyncEngine = create_async_engine(
-    url=f"sqlite+aiosqlite:///{config.STORAGE_PATH}/db.sqlite3"
-)
+engine: AsyncEngine = create_async_engine(url=settings.db_url)
 async_session: async_sessionmaker[AsyncSession] = async_sessionmaker(
     engine, class_=AsyncSession
 )
@@ -55,6 +53,6 @@ def connection(
     return wrapper
 
 
-async def create_tables():
+async def create_tables() -> None:
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)

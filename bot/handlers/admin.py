@@ -8,15 +8,13 @@ from aiogram.types import Message
 from bot import keyboards as kb
 from bot.db import User, get_all_users, update_user_by_id
 from bot.filters import IsAdminFilter
+from bot.utils import queue_manager
 from bot.utils.broadcaster import send, send_queue
 from bot.utils.json_storage import save_bot_settings
-from bot.utils.queue import QueueManager
-from config import config
-
-queue_manager = QueueManager()
+from config import settings
 
 router = Router()
-router.message.filter(IsAdminFilter(admin_ids=config.ADMINS))
+router.message.filter(IsAdminFilter(admin_ids=settings.admins))
 
 
 @router.message(F.text, Command("admin", "adm"))

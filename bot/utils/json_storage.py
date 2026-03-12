@@ -4,10 +4,10 @@ from typing import TypedDict
 
 import aiofiles
 
-from config import config
+from config import settings
 
-QUEUES_FILE_PATH = config.STORAGE_PATH + "/queues.json"
-BOT_SETTINGS_FILE_PATH = config.STORAGE_PATH + "/bot-settings.json"
+QUEUES_FILE_PATH = settings.storage_path + "/queues.json"
+BOT_SETTINGS_FILE_PATH = settings.storage_path + "/bot-settings.json"
 
 
 class BotSettings(TypedDict):

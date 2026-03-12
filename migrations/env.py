@@ -7,7 +7,7 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 # from bot.db import models  # noqa
-from bot.db.database_helper import Base
+from bot.db.database import Base
 from config import settings
 
 config = context.config

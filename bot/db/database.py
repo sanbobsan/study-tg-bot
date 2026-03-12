@@ -1,221 +1,58 @@
-import logging
-from typing import Sequence
+from functools import wraps
+from typing import Awaitable, Callable, Concatenate, ParamSpec, TypeVar
 
-from sqlalchemy import select
+from sqlalchemy import Integer
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.ext.asyncio import (
+    AsyncAttrs,
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
+from sqlalchemy.ext.asyncio.engine import AsyncEngine
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
-from bot.db.database_helper import AsyncSession, connection
-from bot.db.models import User
+from config import settings
 
-
-@connection
-async def get_user(session: AsyncSession, tg_id: int) -> User | None:
-    """Получает пользователя из бд
-    Args:
-        session (AsyncSession): Объект сессии
-        tg_id (int): Id, привязанный к телеграмм аккаунту
-    Returns:
-        User: Пользователь
-    """
-    try:
-        user: User | None = await session.scalar(select(User).filter_by(tg_id=tg_id))
-        return user
-    except Exception as e:
-        logging.error(e)
-        return None
+engine: AsyncEngine = create_async_engine(url=settings.db_url)
+async_session: async_sessionmaker[AsyncSession] = async_sessionmaker(
+    engine, class_=AsyncSession
+)
 
 
-@connection
-async def create_user(
-    session: AsyncSession,
-    tg_id: int,
-    username: str | None = None,
-    name: str | None = None,
-    trusted: bool | None = None,
-) -> User | None:
-    """Создает, добавляет пользователя в бд, если такого нет.
-    Возвращает пользователя, если найден или None, если создан
-    Args:
-        session (AsyncSession): Объект сессии
-        tg_id (int): Id, привязанный к телеграмм аккаунту
-        username (str | None, optional): Username аккаунта (@example). Defaults to None
-        name (str | None, optional): Имя пользователя. Defaults to None
-    Returns:
-        User: Найденный пользователь
-    """
-    try:
-        user: User | None = await session.scalar(select(User).filter_by(tg_id=tg_id))
-        if user is not None:
-            logging.info(f"User already exists {tg_id} @{user.username} {user.name}")
-            await session.commit()
-            await session.refresh(user)
-            return user
+class Base(AsyncAttrs, DeclarativeBase):
+    __abstract__ = True
 
-        new_user = User(tg_id=tg_id)
-        if username is not None:
-            new_user.username = username
-        if name is not None:
-            new_user.name = name
-        if trusted is not None:
-            new_user.trusted = trusted
-        session.add(new_user)
-        await session.commit()
-        logging.info(f"User created {tg_id} @{username}")
-        return None
-
-    except Exception as e:
-        logging.error(e)
-        return None
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
 
 
-@connection
-async def get_all_users(session: AsyncSession) -> Sequence[User]:
-    """Получает всех пользователей из бд
-    Args:
-        session (AsyncSession): Объект сессии
-    Returns:
-        Sequence[User]: Последовательность из всех пользователей
-    """
-    try:
-        users: Sequence[User] = (await session.scalars(select(User))).all()
-        return users
-
-    except Exception as e:
-        logging.error(e)
-        return list()
+P = ParamSpec("P")
+R = TypeVar("R")
 
 
-@connection
-async def get_all_trusted_users(session: AsyncSession) -> Sequence[User]:
-    """Получает доверенных пользователей из бд
-    Args:
-        session (AsyncSession): Объект сессии
-    Returns:
-        Sequence[User]: Последовательность из доверенных пользователей
-    """
-    try:
-        users: Sequence[User] = (
-            await session.scalars(select(User).filter_by(trusted=True))
-        ).all()
-        return users
+def connection(
+    func: Callable[Concatenate["AsyncSession", P], Awaitable[R]],
+) -> Callable[P, Awaitable[R]]:
+    @wraps(func)
+    async def wrapper(*args, **kwargs) -> R:
+        async with async_session() as session:
+            try:
+                return await func(session, *args, **kwargs)
 
-    except Exception as e:
-        logging.error(e)
-        return list()
+            except SQLAlchemyError as e:
+                await session.rollback()
+                raise e
 
+            except Exception as e:
+                await session.rollback()
+                raise e
 
-def _apply_user_updates(
-    user: User,
-    username: str | None = None,
-    name: str | None = None,
-    has_desire: bool | None = None,
-    trusted: bool | None = None,
-) -> None:
-    """Применяет обновления к объекту пользователя
-    Args:
-        user (User): Объект пользователя для обновления
-        username (str | None, optional): Username аккаунта (@example). Defaults to None.
-        name (str | None, optional): Имя, указанное пользователем в самом боте. Defaults to None.
-        has_desire (bool | None, optional): Хочет ли пользователь участвовать в очереди. Defaults to None.
-        trusted (bool | None, optional): Является ли пользователь доверенным. Defaults to None.
-    """
-    if username is not None:
-        user.username = username
+            finally:
+                await session.close()
 
-    if name is not None:
-        old_name: str = user.name
-        logging.info(
-            f"User renamed id={user.id} tg_id={user.tg_id} @{user.username} {old_name} -> {name}"
-        )
-        user.name = name
-
-    if has_desire is not None:
-        user.has_desire = has_desire
-
-    if trusted is not None:
-        user.trusted = trusted
-        logging.info(
-            f"User trust has changed id={user.id} tg_id={user.tg_id} @{user.username}"
-        )
+    return wrapper
 
 
-@connection
-async def update_user(
-    session: AsyncSession,
-    tg_id: int,
-    username: str | None = None,
-    name: str | None = None,
-    has_desire: bool | None = None,
-    trusted: bool | None = None,
-) -> User | None:
-    """Обновляет пользователя по tg_id, если найден
-    - Все поля необязательны, кроме tg_id
-    Args:
-        session (AsyncSession): Объект сессии
-        tg_id (int): Id, привязанный к телеграмм аккаунту
-        username (str | None, optional): Username аккаунта (@example). Defaults to None.
-        name (str | None, optional): Имя, указанное пользователем в самом боте. Defaults to None.
-        has_desire (bool | None, optional): Хочет ли пользователь участвовать в очереди. Defaults to None.
-        trusted (bool | None, optional): Является ли пользователь доверенным. Defaults to None.
-    Returns:
-        User | None: Обновленный пользователь или None, если не найден
-    """
-    try:
-        user: User | None = await session.scalar(select(User).filter_by(tg_id=tg_id))
-
-        if user is None:
-            logging.error(f"User not found tg_id={tg_id} @{username}")
-            return None
-
-        _apply_user_updates(
-            user, username=username, name=name, has_desire=has_desire, trusted=trusted
-        )
-
-        await session.commit()
-        await session.refresh(user)
-        return user
-
-    except Exception as e:
-        logging.error(e)
-        return None
-
-
-@connection
-async def update_user_by_id(
-    session: AsyncSession,
-    user_id: int,
-    username: str | None = None,
-    name: str | None = None,
-    has_desire: bool | None = None,
-    trusted: bool | None = None,
-) -> User | None:
-    """Обновляет пользователя по внутреннему id, если найден
-    - Все поля необязательны, кроме user_id
-    - Предназначена для использования в админ-панели
-    Args:
-        session (AsyncSession): Объект сессии
-        user_id (int): Внутренний id пользователя (row_id, primary key)
-        username (str | None, optional): Username аккаунта (@example). Defaults to None.
-        name (str | None, optional): Имя, указанное пользователем в самом боте. Defaults to None.
-        has_desire (bool | None, optional): Хочет ли пользователь участвовать в очереди. Defaults to None.
-        trusted (bool | None, optional): Является ли пользователь доверенным. Defaults to None.
-    Returns:
-        User | None: Обновленный пользователь или None, если не найден
-    """
-    try:
-        user: User | None = await session.scalar(select(User).filter_by(id=user_id))
-
-        if user is None:
-            logging.error(f"User not found id={user_id}")
-            return None
-
-        _apply_user_updates(
-            user, username=username, name=name, has_desire=has_desire, trusted=trusted
-        )
-
-        await session.commit()
-        await session.refresh(user)
-        return user
-
-    except Exception as e:
-        logging.error(e)
-        return None
+async def create_tables() -> None:
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)

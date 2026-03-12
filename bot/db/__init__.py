@@ -1,4 +1,6 @@
-from .database import (
+from .database import create_tables
+from .models import User
+from .repository import (
     create_user,
     get_all_trusted_users,
     get_all_users,
@@ -6,8 +8,6 @@ from .database import (
     update_user,
     update_user_by_id,
 )
-from .database_helper import create_tables
-from .models import User
 
 __all__ = [
     "create_user",

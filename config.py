@@ -1,10 +1,12 @@
-from pydantic import Field, SecretStr
+from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+from typing import Union
 
 
 class Settings(BaseSettings):
     token: str = Field()
-    admins: list[int] = Field()
+    admins: Union[list[int], str] = Field()
 
     storage_path: str = "data"
 
@@ -13,6 +15,16 @@ class Settings(BaseSettings):
     db_host: str = "localhost"
     db_port: int = 5432
     db_name: str = "database"
+
+    @field_validator("admins", mode="before")
+    @classmethod
+    def parse_admins(cls, v):
+        if isinstance(v, str):
+            v = v.replace("[", "").replace("]", "").strip()
+            if not v:
+                return []
+            return [int(admin.strip()) for admin in v.split(",")]
+        return v
 
     @property
     def db_url(self) -> str:

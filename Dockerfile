@@ -13,9 +13,9 @@ WORKDIR /app
 #     -D -H && \
 #     chown -R appuser:appuser /app
 
-RUN --mount=type=bind,src=requirements.txt,dst=requirements.txt \
-    --mount=type=cache,dst=/root/.cache/pip \
-    pip install -r requirements.txt
+COPY requirements.txt .
+
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
